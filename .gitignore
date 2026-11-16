@@ -10,8 +10,5 @@ firmware/
 *.tar.gz
 *.tar.xz
 
-# Kernel source checkout (cloned separately, large)
-src/
-
 # macOS
 .DS_Store
