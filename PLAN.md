@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P2.3
+## ▶ RESUME HERE: P2.4
 
 ---
 
@@ -54,7 +54,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [x] **P2.1** Write `docker/Dockerfile`: Ubuntu 20.04 **arm64** with build-essential, bc, bison, flex, libssl-dev, lz4, git, python3, cpio, android-sdk-libsparse-utils (`img2simg`), and mkbootimg tools.
 - [x] **P2.2** Write `scripts/dev.sh`: runs a command inside the container with the repo mounted at `/work`.
   - Gate: `scripts/dev.sh uname -m` prints `aarch64`.
-- [ ] **P2.3** Clone the kernel into `src/kernel` (gitignored) from `https://android.googlesource.com/kernel/msm`. Use the newest `android-msm-wahoo-4.4-*` branch for Android 11 (list with `git ls-remote --heads`).
+- [x] **P2.3** _Done: submodule `external/kernel-msm`, branch `android-msm-wahoo-4.4-android11` @ `52750b8f2138` (= stock kernel). Fresh clone: `git submodule update --init --depth 1`._ Clone the kernel from `https://android.googlesource.com/kernel/msm`. Use the newest `android-msm-wahoo-4.4-*` branch for Android 11 (list with `git ls-remote --heads`).
   - Record branch + commit hash in `docs/log.md`.
 - [ ] **P2.4** Unpack `firmware/boot.img` with `unpack_bootimg`. Record header version, kernel cmdline, base address, page size and offsets in `docs/device-info.md`.
 
