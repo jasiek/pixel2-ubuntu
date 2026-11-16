@@ -31,5 +31,12 @@ Captured 2026-11-16 after the bootloader unlock. Full output is in `firmware/get
 | `dtbo`, `vbmeta`, `modem`, `radio` | slotted (`_a`/`_b`) | |
 
 
+## Stock kernel (seen in P1.8)
+- `Linux version 4.4.223-g52750b8f2138-ab6846512`, built Fri Sep 18 2020.
+- Kernel git commit: **`52750b8f2138`**. Check out exactly this commit in P2.3.
+- Toolchain: **Android clang 11.0.1 (r383902)**. Use this clang version in P3.1, rather than GCC.
+- Stock cmdline: `androidboot.hardware=walleye androidboot.console=ttyMSM0 lpm_levels.sleep_disabled=1 user_debug=31 msm_rtb.filter=0x37 ehci-hcd`
+- boot.img: page size 4096, kernel offset 0x8000, ramdisk offset 0x1000000.
+
 ## From stock `boot.img` header (P2.4)
 _TODO_
