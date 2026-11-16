@@ -1,3 +1,7 @@
 [submodule "external/mkbootimg"]
 	path = external/mkbootimg
 	url = https://android.googlesource.com/platform/system/tools/mkbootimg
+[submodule "external/kernel-msm"]
+	path = external/kernel-msm
+	url = https://android.googlesource.com/kernel/msm
+	branch = android-msm-wahoo-4.4-android11
