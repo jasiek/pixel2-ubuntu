@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P1.4
+## ▶ RESUME HERE: P1.5
 
 ---
 
@@ -31,7 +31,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [x] **P1.2** Settings → About phone: write the Android version, build number and storage size into `docs/device-info.md`.
 - [x] **P1.3** Tap *Build number* 7× to unlock Developer options. In Developer options, turn on **OEM unlocking** and **USB debugging**.
   - Gate: the OEM unlocking toggle is *not* greyed out. If greyed out: connect to wifi, factory reset, set up online, retry.
-- [ ] **P1.4** Unlock the bootloader:
+- [x] **P1.4** Unlock the bootloader:
   ```sh
   adb reboot bootloader
   fastboot flashing unlock           # confirm on phone with volume keys + power
