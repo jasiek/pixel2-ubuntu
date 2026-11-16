@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P4.1
+## ▶ RESUME HERE: P4.3
 
 ---
 
@@ -74,13 +74,13 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Gate: it compiles.
 
 ## Phase 4: Initramfs + rootfs (2–4 h)
-- [ ] **P4.1** Write `scripts/build-rootfs.sh`, which runs inside the arm64 container:
+- [x] **P4.1** Write `scripts/build-rootfs.sh`, which runs inside the arm64 container:
   - Start from `ubuntu-base-24.04.x-base-arm64.tar.gz`.
   - Install systemd, systemd-sysv, udev, openssh-server, sudo, network-manager, iproute2, e2fsprogs, avahi-daemon, nano, less.
   - Set hostname `pixel2`, create user `ubuntu`, and install your SSH public key.
   - Add a systemd unit that brings up the USB-ECM gadget at `172.16.42.1/24`.
   - Install our kernel modules (`make modules_install`) into `/lib/modules/<ver>/`: wifi (`wlan.ko`), battery (`htc_battery.ko`) and touchscreen are modules. Google's prebuilt ones in `/vendor` won't load into our kernel (found in P3.2).
-- [ ] **P4.2** Pack into a 4 GB ext4 `build/rootfs.img`, then `img2simg` → `build/rootfs.simg`.
+- [x] **P4.2** Pack into a 4 GB ext4 `build/rootfs.img`, then `img2simg` → `build/rootfs.simg`.
 - [ ] **P4.3** Write `scripts/build-initramfs.sh`: a static-busybox `/init` that:
   - mounts proc, sys and dev;
   - starts the USB-ECM gadget;
