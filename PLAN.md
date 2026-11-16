@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P2.4
+## ▶ RESUME HERE: P3.1
 
 ---
 
@@ -56,10 +56,10 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Gate: `scripts/dev.sh uname -m` prints `aarch64`.
 - [x] **P2.3** _Done: submodule `external/kernel-msm`, branch `android-msm-wahoo-4.4-android11` @ `52750b8f2138` (= stock kernel). Fresh clone: `git submodule update --init --depth 1`._ Clone the kernel from `https://android.googlesource.com/kernel/msm`. Use the newest `android-msm-wahoo-4.4-*` branch for Android 11 (list with `git ls-remote --heads`).
   - Record branch + commit hash in `docs/log.md`.
-- [ ] **P2.4** Unpack `firmware/boot.img` with `unpack_bootimg`. Record header version, kernel cmdline, base address, page size and offsets in `docs/device-info.md`.
+- [x] **P2.4** Unpack `firmware/boot.img` with `unpack_bootimg`. Record header version, kernel cmdline, base address, page size and offsets in `docs/device-info.md`.
 
 ## Phase 3: Kernel (2–6 h)
-- [ ] **P3.1** Build stock `wahoo_defconfig` → `Image.lz4-dtb`. Script it as `scripts/build-kernel.sh`.
+- [ ] **P3.1** Build stock `wahoo_defconfig` with clang 11 (`make CC=clang LD=ld.lld`, matching the stock toolchain) → `Image.lz4-dtb`. Script it as `scripts/build-kernel.sh`.
   - Gate: it compiles. If the compiler is too new, try GCC 7/8 or Google's prebuilt toolchain; log it.
 - [ ] **P3.2** Repack our kernel with the **stock** ramdisk into `build/boot-stockramdisk.img`, then `fastboot boot` it.
   - Gate: Android boots. Proves our kernel build works on the phone.
@@ -68,6 +68,8 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - USB gadget networking: `USB_CONFIGFS_ECM`, `USB_CONFIGFS_NCM`
   - `# CONFIG_ANDROID_PARANOID_NETWORK is not set` (otherwise only special Android groups get network access)
   - SELinux off (`selinux=0` on cmdline or disable in config)
+  - **Ignore `skip_initramfs`** (patch `init/initramfs.c`): the bootloader adds it on normal boots, and it would bypass our initramfs. Found in P2.4.
+  - Already set in `wahoo_defconfig`: `USB_CONFIGFS_NCM=y` (macOS supports NCM), `BUILD_ARM64_APPENDED_DTB_IMAGE=y`. Missing: `DEVTMPFS`, `FHANDLE`.
 - [ ] **P3.4** Rebuild with the fragment merged.
   - Gate: it compiles.
 
