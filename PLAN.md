@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P3.1
+## ▶ RESUME HERE: P3.2
 
 ---
 
@@ -59,7 +59,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [x] **P2.4** Unpack `firmware/boot.img` with `unpack_bootimg`. Record header version, kernel cmdline, base address, page size and offsets in `docs/device-info.md`.
 
 ## Phase 3: Kernel (2–6 h)
-- [ ] **P3.1** Build stock `wahoo_defconfig` with clang 11 (`make CC=clang LD=ld.lld`, matching the stock toolchain) → `Image.lz4-dtb`. Script it as `scripts/build-kernel.sh`.
+- [x] **P3.1** Build stock `wahoo_defconfig` with clang 11 (`make CC=clang LD=ld.lld`, matching the stock toolchain) → `Image.lz4-dtb`. Script it as `scripts/build-kernel.sh`.
   - Gate: it compiles. If the compiler is too new, try GCC 7/8 or Google's prebuilt toolchain; log it.
 - [ ] **P3.2** Repack our kernel with the **stock** ramdisk into `build/boot-stockramdisk.img`, then `fastboot boot` it.
   - Gate: Android boots. Proves our kernel build works on the phone.
