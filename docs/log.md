@@ -14,3 +14,4 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
 - P1.1: owner factory-reset (wiped) the phone; nothing to back up.
 - P1.2: confirmed build RP1A.201005.004.A1 (final Android 11) and 128 GB storage. P1.5 reflash is optional since the phone is already on the final build; the factory zip is still needed for P1.7 firmware.
 - P1.3: OEM unlocking toggle enabled (not greyed out).
+- P1.4: `fastboot flashing unlock` returned OKAY (9 s, confirmed on phone). Phone then left fastboot mode (likely rebooting to wipe). `unlock_critical` still to do.
