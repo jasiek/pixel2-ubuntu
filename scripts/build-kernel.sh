@@ -3,6 +3,7 @@
 #
 #   scripts/build-kernel.sh              # wahoo_defconfig + kernel/walleye-ubuntu.config
 #   STOCK=1 scripts/build-kernel.sh      # plain wahoo_defconfig (P3.1 sanity build)
+#   FRAGMENT=kernel/x.config OUT=build/kernel-x scripts/build-kernel.sh   # debug variants
 #
 # Runs inside the build container (re-execs itself through scripts/dev.sh).
 # Output: build/kernel[-stock]/arch/arm64/boot/Image.lz4-dtb
@@ -12,12 +13,13 @@
 set -euo pipefail
 
 if [ ! -f /.dockerenv ]; then
-    exec "$(dirname "$0")/dev.sh" env STOCK="${STOCK:-0}" JOBS="${JOBS:-}" /work/scripts/build-kernel.sh "$@"
+    exec "$(dirname "$0")/dev.sh" env STOCK="${STOCK:-0}" JOBS="${JOBS:-}" FRAGMENT="${FRAGMENT:-}" OUT="${OUT:-}" /work/scripts/build-kernel.sh "$@"
 fi
 
 SRC=/work/external/kernel-msm
-FRAGMENT=/work/kernel/walleye-ubuntu.config
-if [ "${STOCK:-0}" = 1 ]; then OUT=/work/build/kernel-stock; else OUT=/work/build/kernel; fi
+FRAGMENT=/work/${FRAGMENT:-kernel/walleye-ubuntu.config}
+if [ -n "${OUT:-}" ]; then OUT=/work/$OUT
+elif [ "${STOCK:-0}" = 1 ]; then OUT=/work/build/kernel-stock; else OUT=/work/build/kernel; fi
 JOBS="${JOBS:-$(nproc)}"
 
 if [ "${STOCK:-0}" != 1 ]; then
