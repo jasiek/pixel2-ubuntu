@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P3.3
+## ▶ RESUME HERE: P4.1
 
 ---
 
@@ -63,14 +63,14 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Gate: it compiles. If the compiler is too new, try GCC 7/8 or Google's prebuilt toolchain; log it.
 - [x] **P3.2** Repack our kernel with the **stock** ramdisk into `build/boot-stockramdisk.img`, then `fastboot boot` it.
   - Gate: Android boots. Proves our kernel build works on the phone.
-- [ ] **P3.3** Write `kernel/walleye-ubuntu.config` (config fragment). Cross-check against Flohack74's Halium tree (github.com/Flohack74/android_device_google_wahoo).
+- [x] **P3.3** Write `kernel/walleye-ubuntu.config` (config fragment). Cross-check against Flohack74's Halium tree (github.com/Flohack74/android_device_google_wahoo).
   - systemd: `DEVTMPFS`, `DEVTMPFS_MOUNT`, `CGROUPS` + controllers, `FHANDLE`, `AUTOFS4_FS`, `NAMESPACES` (UTS/IPC/PID/NET/USER), `SECCOMP`, `TMPFS_POSIX_ACL`, `TMPFS_XATTR`, `INOTIFY_USER`, `SIGNALFD`, `TIMERFD`, `EPOLL`
   - USB gadget networking: `USB_CONFIGFS_ECM`, `USB_CONFIGFS_NCM`
   - `# CONFIG_ANDROID_PARANOID_NETWORK is not set` (otherwise only special Android groups get network access)
   - SELinux off (`selinux=0` on cmdline or disable in config)
   - **Ignore `skip_initramfs`** (patch `init/initramfs.c`): the bootloader adds it on normal boots, and it would bypass our initramfs. Found in P2.4.
   - Already set in `wahoo_defconfig`: `USB_CONFIGFS_NCM=y` (macOS supports NCM), `BUILD_ARM64_APPENDED_DTB_IMAGE=y`. Missing: `DEVTMPFS`, `FHANDLE`.
-- [ ] **P3.4** Rebuild with the fragment merged.
+- [x] **P3.4** Rebuild with the fragment merged.
   - Gate: it compiles.
 
 ## Phase 4: Initramfs + rootfs (2–4 h)
