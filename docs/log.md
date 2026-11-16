@@ -22,3 +22,4 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
 - Owner asked: reference other software as **git submodules** (in `external/`). Added `external/mkbootimg` (AOSP, d2bb0af). Kernel branch found: `android-msm-wahoo-4.4-android11` head = `52750b8f2138` = tag android-11.0.0_r0.34 = exactly the stock kernel.
 - P2.1: Docker image `pixel2-build` (Ubuntu 20.04 arm64, Ubuntu clang 11.0.0, img2simg, busybox-static) builds and runs natively.
 - Blocker found: Mac disk is case-insensitive APFS; the kernel tree has case-colliding files, so it cannot be checked out there. Needs a case-sensitive volume.
+- Fix for case-sensitivity: created case-sensitive APFS volume `Pixel2Dev` (`diskutil apfs addVolume disk3 "Case-sensitive APFS" Pixel2Dev`, shares free space). Moved repo to `/Volumes/Pixel2Dev/ubuntu-touch-pixel2`; old path `~/github/ubuntu-touch-pixel2` is now a symlink to it.
