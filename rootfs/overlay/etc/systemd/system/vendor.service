@@ -1,0 +1,13 @@
+[Unit]
+Description=Mount Android vendor partition (firmware) at /vendor
+DefaultDependencies=no
+After=systemd-udevd.service systemd-udev-trigger.service local-fs-pre.target
+Before=systemd-modules-load.service local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/mount-vendor.sh
+
+[Install]
+WantedBy=local-fs.target
