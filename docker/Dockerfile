@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         lz4 cpio kmod git ca-certificates curl wget xz-utils file \
         python2 python3 \
         android-sdk-libsparse-utils e2fsprogs \
-        busybox-static \
+        busybox-static device-tree-compiler \
     && rm -rf /var/lib/apt/lists/*
 
 # Unversioned clang/ld.lld names, as the kernel Makefile expects.
