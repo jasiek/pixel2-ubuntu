@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P3.2
+## ▶ RESUME HERE: P3.3
 
 ---
 
@@ -61,7 +61,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 ## Phase 3: Kernel (2–6 h)
 - [x] **P3.1** Build stock `wahoo_defconfig` with clang 11 (`make CC=clang LD=ld.lld`, matching the stock toolchain) → `Image.lz4-dtb`. Script it as `scripts/build-kernel.sh`.
   - Gate: it compiles. If the compiler is too new, try GCC 7/8 or Google's prebuilt toolchain; log it.
-- [ ] **P3.2** Repack our kernel with the **stock** ramdisk into `build/boot-stockramdisk.img`, then `fastboot boot` it.
+- [x] **P3.2** Repack our kernel with the **stock** ramdisk into `build/boot-stockramdisk.img`, then `fastboot boot` it.
   - Gate: Android boots. Proves our kernel build works on the phone.
 - [ ] **P3.3** Write `kernel/walleye-ubuntu.config` (config fragment). Cross-check against Flohack74's Halium tree (github.com/Flohack74/android_device_google_wahoo).
   - systemd: `DEVTMPFS`, `DEVTMPFS_MOUNT`, `CGROUPS` + controllers, `FHANDLE`, `AUTOFS4_FS`, `NAMESPACES` (UTS/IPC/PID/NET/USER), `SECCOMP`, `TMPFS_POSIX_ACL`, `TMPFS_XATTR`, `INOTIFY_USER`, `SIGNALFD`, `TIMERFD`, `EPOLL`
@@ -79,6 +79,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Install systemd, systemd-sysv, udev, openssh-server, sudo, network-manager, iproute2, e2fsprogs, avahi-daemon, nano, less.
   - Set hostname `pixel2`, create user `ubuntu`, and install your SSH public key.
   - Add a systemd unit that brings up the USB-ECM gadget at `172.16.42.1/24`.
+  - Install our kernel modules (`make modules_install`) into `/lib/modules/<ver>/`: wifi (`wlan.ko`), battery (`htc_battery.ko`) and touchscreen are modules. Google's prebuilt ones in `/vendor` won't load into our kernel (found in P3.2).
 - [ ] **P4.2** Pack into a 4 GB ext4 `build/rootfs.img`, then `img2simg` → `build/rootfs.simg`.
 - [ ] **P4.3** Write `scripts/build-initramfs.sh`: a static-busybox `/init` that:
   - mounts proc, sys and dev;
