@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P1.7
+## ▶ RESUME HERE: P1.8
 
 ---
 
@@ -46,7 +46,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   fastboot getvar all 2>&1 | tee firmware/getvar-all.txt
   ```
   - Note: current slot, and the sizes of boot, userdata, vendor and modem.
-- [ ] **P1.7** From the factory zip's inner `image-walleye-*.zip`, extract `boot.img`, `vendor.img`, `vbmeta.img` and `dtbo.img` into `firmware/`. Also keep `radio-walleye-*.img` there.
+- [x] **P1.7** From the factory zip's inner `image-walleye-*.zip`, extract `boot.img`, `vendor.img`, `vbmeta.img` and `dtbo.img` into `firmware/`. Also keep `radio-walleye-*.img` there.
 - [ ] **P1.8** Test tethered boot: `fastboot boot firmware/boot.img`.
   - Gate: Android boots. This proves we can test kernels without flashing.
 
