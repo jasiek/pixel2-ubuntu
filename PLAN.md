@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P0.4
+## ▶ RESUME HERE: P0.5
 
 ---
 
@@ -23,7 +23,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [x] **P0.1** `.gitignore` (build outputs + proprietary firmware never committed)
 - [x] **P0.2** `docs/research.md`
 - [x] **P0.3** `PLAN.md` (this file)
-- [ ] **P0.4** `README.md`
+- [x] **P0.4** `README.md`
 - [ ] **P0.5** `docs/log.md`
 
 ## Phase 1: Phone prep (1 h, needs the phone, ⚠️ wipes it)
