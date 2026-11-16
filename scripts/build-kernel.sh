@@ -6,6 +6,9 @@
 #
 # Runs inside the build container (re-execs itself through scripts/dev.sh).
 # Output: build/kernel[-stock]/arch/arm64/boot/Image.lz4-dtb
+#         build/kernel/modules-install/lib/modules/<release>/  (non-stock only)
+# Patches in kernel/patches/*.patch are applied to the submodule (idempotent);
+# .gitmodules sets ignore=dirty so the patched tree doesn't show as modified.
 set -euo pipefail
 
 if [ ! -f /.dockerenv ]; then
@@ -17,10 +20,25 @@ FRAGMENT=/work/kernel/walleye-ubuntu.config
 if [ "${STOCK:-0}" = 1 ]; then OUT=/work/build/kernel-stock; else OUT=/work/build/kernel; fi
 JOBS="${JOBS:-$(nproc)}"
 
+if [ "${STOCK:-0}" != 1 ]; then
+    for p in /work/kernel/patches/*.patch; do
+        if git -C "$SRC" apply --check -R "$p" 2>/dev/null; then
+            echo "patch already applied: $(basename "$p")"
+        else
+            git -C "$SRC" apply "$p" && echo "patch applied: $(basename "$p")"
+        fi
+    done
+else
+    # Stock build: make sure no patches are applied.
+    for p in /work/kernel/patches/*.patch; do
+        git -C "$SRC" apply --check -R "$p" 2>/dev/null && git -C "$SRC" apply -R "$p" && echo "patch reverted: $(basename "$p")"
+    done
+fi
+
 # Same toolchain family as Google's build.config.common.clang (clang 11),
 # but with native arm64 binutils instead of Android's x86 prebuilts.
 MAKE=(make -C "$SRC" O="$OUT" -j"$JOBS"
-      ARCH=arm64
+      ARCH=arm64 LOCALVERSION=
       CC=clang CLANG_TRIPLE=aarch64-linux-gnu-
       CROSS_COMPILE=aarch64-linux-gnu-
       CROSS_COMPILE_ARM32=arm-linux-gnueabi-)
@@ -50,5 +68,11 @@ fi
 
 "${MAKE[@]}" Image.lz4-dtb 2>&1 | tee "$OUT/build.log" | grep -E "error|Error|warning: .*(implicit|incompatible)|Image" || true
 test -f "$OUT/arch/arm64/boot/Image.lz4-dtb"
+if [ "${STOCK:-0}" != 1 ]; then
+    "${MAKE[@]}" modules 2>&1 | tee -a "$OUT/build.log" | grep -E "error|Error" || true
+    rm -rf "$OUT/modules-install"
+    "${MAKE[@]}" INSTALL_MOD_PATH="$OUT/modules-install" INSTALL_MOD_STRIP=1 modules_install >/dev/null
+    find "$OUT/modules-install" -name "*.ko" | sed "s|$OUT/modules-install/||"
+fi
 ls -la "$OUT/arch/arm64/boot/Image.lz4-dtb"
 strings "$OUT/vmlinux" | grep -m1 "^Linux version"

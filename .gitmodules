@@ -6,3 +6,4 @@
 	url = https://android.googlesource.com/kernel/msm
 	branch = android-msm-wahoo-4.4-android11
 	shallow = true
+	ignore = dirty
