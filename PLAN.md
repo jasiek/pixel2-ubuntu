@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P4.3
+## ▶ RESUME HERE: P5.1
 
 ---
 
@@ -81,13 +81,13 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Add a systemd unit that brings up the USB-ECM gadget at `172.16.42.1/24`.
   - Install our kernel modules (`make modules_install`) into `/lib/modules/<ver>/`: wifi (`wlan.ko`), battery (`htc_battery.ko`) and touchscreen are modules. Google's prebuilt ones in `/vendor` won't load into our kernel (found in P3.2).
 - [x] **P4.2** Pack into a 4 GB ext4 `build/rootfs.img`, then `img2simg` → `build/rootfs.simg`.
-- [ ] **P4.3** Write `scripts/build-initramfs.sh`: a static-busybox `/init` that:
+- [x] **P4.3** Write `scripts/build-initramfs.sh`: a static-busybox `/init` that:
   - mounts proc, sys and dev;
   - starts the USB-ECM gadget;
   - mounts the userdata partition and runs `resize2fs` once to fill it;
   - runs `switch_root` → `/sbin/init`.
   - On failure: start `telnetd` on `172.16.42.1` and keep running, so we can log in and debug.
-- [ ] **P4.4** Write `scripts/make-bootimg.sh`: kernel + initramfs + cmdline/offsets from P2.4 → `build/boot.img`.
+- [x] **P4.4** Write `scripts/make-bootimg.sh`: kernel + initramfs + cmdline/offsets from P2.4 → `build/boot.img`.
 
 ## Phase 5: First boot, tethered (1–3 h; most debugging lands here)
 - [ ] **P5.1** ⚠️ Overwrites Android's data partition: `fastboot flash userdata build/rootfs.simg`
