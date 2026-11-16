@@ -39,4 +39,29 @@ Captured 2026-11-16 after the bootloader unlock. Full output is in `firmware/get
 - boot.img: page size 4096, kernel offset 0x8000, ramdisk offset 0x1000000.
 
 ## From stock `boot.img` header (P2.4)
-_TODO_
+Unpacked with `external/mkbootimg/unpack_bootimg.py` into `build/stock-boot/` (gitignored).
+
+| Field | Value |
+|---|---|
+| Header version | 0 |
+| Page size | 4096 |
+| Kernel | LZ4-compressed `Image.lz4-dtb` (DTB appended), 14.3 MiB, load addr `0x00008000` |
+| Ramdisk | gzip cpio, 10.9 MiB (21.4 MiB unpacked), load addr `0x01000000` |
+| Tags | `0x00000100` |
+| OS version / patch | 11.0.0 / 2020-10 |
+
+**mkbootimg arguments to reproduce:**
+```
+--header_version 0 --pagesize 4096 --base 0x00000000 \
+--kernel_offset 0x00008000 --ramdisk_offset 0x01000000 --tags_offset 0x00000100 \
+--os_version 11.0.0 --os_patch_level 2020-10
+```
+
+**Full stock cmdline:**
+```
+androidboot.hardware=walleye androidboot.console=ttyMSM0 lpm_levels.sleep_disabled=1 user_debug=31 msm_rtb.filter=0x37 ehci-hcd.park=3 service_locator.enable=1 swiotlb=2048 firmware_class.path=/vendor/firmware loop.max_part=7 raid=noautodetect usbcore.autosuspend=7 androidboot.dtbo_idx=3 buildvariant=user
+```
+
+Notes:
+- `firmware_class.path=/vendor/firmware`: the kernel loads firmware from there, so mount `vendor_a/b` at `/vendor` (P6.1).
+- ⚠️ The bootloader adds **`skip_initramfs`** to the cmdline on normal boots. The kernel (`init/initramfs.c:618`) then ignores our ramdisk and mounts the system partition as root. Our kernel must ignore that flag (P3.3).
