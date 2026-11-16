@@ -1,0 +1,17 @@
+# Build outputs (kernel, initramfs, rootfs, boot images)
+build/
+out/
+
+# Proprietary Google/Qualcomm firmware and factory images — never commit
+firmware/
+*.img
+*.simg
+*.zip
+*.tar.gz
+*.tar.xz
+
+# Kernel source checkout (cloned separately, large)
+src/
+
+# macOS
+.DS_Store
