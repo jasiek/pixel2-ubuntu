@@ -7,8 +7,8 @@ Facts about this specific phone. Never commit the serial number.
 |---|---|
 | Model | Pixel 2 (walleye), Google Store |
 | Android version | 11 (implied by `RP1A` build prefix) |
-| Build number | `RP1A.202005.004.A1` as reported. Google's final walleye build is `RP1A.201005.004.A1`; re-check on the phone, likely a typo |
-| Storage size | _TODO: 64 GB or 128 GB_ |
+| Build number | `RP1A.201005.004.A1` (Google's final walleye build, Android 11) |
+| Storage size | 128 GB (userdata will be ~110 GB → Ubuntu rootfs) |
 
 ## From `fastboot getvar all` (P1.6)
 _TODO_
