@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P1.5
+## ▶ RESUME HERE: P1.6
 
 ---
 
@@ -39,7 +39,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   fastboot getvar unlocked
   ```
   - Gate: output says `unlocked: yes`.
-- [ ] **P1.5** Download the final Android 11 factory image for walleye from https://developers.google.com/android/images#walleye (expected `RP1A.201005.004.A1`; take the newest listed). Unzip it into `firmware/` and run its `flash-all.sh` with the phone in bootloader mode.
+- [x] **P1.5** _Skipped (2026-11-16): phone already on final build `RP1A.201005.004.A1`, bootloader `mw8998-003.0085.00`, radio `g8998-00034-2006052136`. Still download the zip for P1.7._ Download the final Android 11 factory image for walleye from https://developers.google.com/android/images#walleye (expected `RP1A.201005.004.A1`; take the newest listed). Unzip it into `firmware/` and run its `flash-all.sh` with the phone in bootloader mode.
   - Gate: phone boots Android 11.
 - [ ] **P1.6** In bootloader mode, record partition info into `docs/device-info.md` (delete the serial number line before committing):
   ```sh
