@@ -10,6 +10,8 @@ T=/tmp/initramfs
 rm -rf "$T"; mkdir -p "$T"/{bin,dev,proc,sys,tmp,run,newroot}
 cp /bin/busybox "$T/bin/busybox"
 install -m 755 /work/initramfs/init "$T/init"
+# reboot-bootloader [arg]: reboot into fastboot (or recovery, ...).
+gcc -static -Os -s -o "$T/bin/reboot-bootloader" /work/initramfs/reboot-bootloader.c
 # The kernel needs /dev/console before devtmpfs is mounted.
 mknod -m 600 "$T/dev/console" c 5 1
 mknod -m 666 "$T/dev/null" c 1 3
