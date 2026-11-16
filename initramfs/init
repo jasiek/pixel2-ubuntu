@@ -49,6 +49,15 @@ setup_usb() {
 }
 setup_usb
 
+# Serial root shell on the USB ACM port, available in every mode
+# (until switch_root replaces this process tree).
+(
+    while true; do
+        [ -e /dev/ttyGS0 ] && setsid getty -n -l /bin/sh 115200 ttyGS0 vt100
+        sleep 2
+    done
+) &
+
 # ---- debug shell ------------------------------------------------------------
 debug_shell() {
     log "entering debug mode: $*"
@@ -66,10 +75,11 @@ EOF
     log "telnet 172.16.42.1 (debug shell); log: /tmp/init.log; pstore: /sys/fs/pstore"
     mkdir -p /sys/fs/pstore
     mount -t pstore pstore /sys/fs/pstore 2>/dev/null
-    while true; do
-        [ -e /dev/ttyGS0 ] && setsid getty -n -l /bin/sh 115200 ttyGS0 vt100
-        sleep 2
-    done
+    # Unattended safety net: go back to fastboot after 10 min unless someone
+    # ran `touch /tmp/keep` (initdebug_timeout=<s> on the cmdline overrides).
+    t=$(sed -n 's/.*initdebug_timeout=\([0-9]*\).*/\1/p' /proc/cmdline)
+    ( sleep "${t:-600}"; [ -e /tmp/keep ] || { log "debug timeout, rebooting to bootloader"; reboot-bootloader; } ) &
+    while true; do sleep 3600; done
 }
 
 grep -qw initdebug /proc/cmdline && debug_shell "initdebug on cmdline"
