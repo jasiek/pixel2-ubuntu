@@ -11,3 +11,4 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - **skip** the Ubuntu Touch 16.04 trial and go straight to porting.
 - Host: M1 Pro Mac (arm64). Docker, adb and fastboot are installed.
 - Phase 0 (repo setup) done. Next: P1.1, which needs the phone in hand.
+- P1.1: owner factory-reset (wiped) the phone; nothing to back up.

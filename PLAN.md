@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P1.1
+## ▶ RESUME HERE: P1.2 (storage size missing)
 
 ---
 
@@ -27,7 +27,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [x] **P0.5** `docs/log.md`
 
 ## Phase 1: Phone prep (1 h, needs the phone, ⚠️ wipes it)
-- [ ] **P1.1** Back up anything you want from the phone (photos, 2FA apps, etc.). Everything is erased in P1.4.
+- [x] **P1.1** Back up anything you want from the phone (photos, 2FA apps, etc.). Everything is erased in P1.4.
 - [ ] **P1.2** Settings → About phone: write the Android version, build number and storage size into `docs/device-info.md`.
 - [ ] **P1.3** Tap *Build number* 7× to unlock Developer options. In Developer options, turn on **OEM unlocking** and **USB debugging**.
   - Gate: the OEM unlocking toggle is *not* greyed out. If greyed out: connect to wifi, factory reset, set up online, retry.
