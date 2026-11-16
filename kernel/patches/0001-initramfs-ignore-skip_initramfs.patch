@@ -1,0 +1,19 @@
+diff --git a/init/initramfs.c b/init/initramfs.c
+index 52059169..7b2d5736 100644
+--- a/init/initramfs.c
++++ b/init/initramfs.c
+@@ -612,7 +612,13 @@ static int __init skip_initramfs_param(char *str)
+ {
+ 	if (*str)
+ 		return 0;
+-	do_skip_initramfs = 1;
++	/*
++	 * The Pixel 2 bootloader adds skip_initramfs on every normal boot,
++	 * which would make the kernel ignore our initramfs and mount the
++	 * Android system partition as root. Accept the parameter (so it is
++	 * not passed on to init) but ignore it.
++	 */
++	pr_info("initramfs: ignoring skip_initramfs from bootloader\n");
+ 	return 1;
+ }
+ __setup("skip_initramfs", skip_initramfs_param);
