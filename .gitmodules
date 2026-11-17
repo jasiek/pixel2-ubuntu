@@ -10,3 +10,7 @@
 [submodule "external/qbootctl"]
 	path = external/qbootctl
 	url = https://github.com/linux-msm/qbootctl
+[submodule "external/porthole-pmaports"]
+	path = external/porthole-pmaports
+	url = https://github.com/porthole-dev/pmaports
+	branch = taimen-bringup
