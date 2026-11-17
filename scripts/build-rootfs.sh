@@ -11,6 +11,7 @@
 #
 # SSH keys installed for user ubuntu: every ~/.ssh/*.pub plus the project
 # key build/ssh/pixel2_ed25519.pub (created if missing).
+# Wifi: build/wifi.ssid + build/wifi.pass become an autoconnect NM profile.
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -63,6 +64,21 @@ depmod -b "$R" "$KREL"
 # SSH access.
 install -d -m 700 -o 1000 -g 1000 "$R/home/ubuntu/.ssh"
 install -m 600 -o 1000 -g 1000 build/ssh/authorized_keys "$R/home/ubuntu/.ssh/authorized_keys"
+
+# Wifi profile from build/wifi.ssid + build/wifi.pass (gitignored; asked by
+# scripts/build-all.sh). An empty or missing ssid file means no wifi profile.
+# Never echo these values.
+if [ -s build/wifi.ssid ] && [ -s build/wifi.pass ]; then
+    ssid=$(cat build/wifi.ssid); psk=$(cat build/wifi.pass)   # $(...) drops trailing newlines
+    nm="$R/etc/NetworkManager/system-connections/wifi.nmconnection"
+    (umask 077
+     printf '[connection]\nid=wifi\ntype=wifi\ninterface-name=wlan0\nautoconnect=true\n\n[wifi]\nmode=infrastructure\nssid=%s\n\n[wifi-security]\nkey-mgmt=wpa-psk\npsk=%s\n\n[ipv4]\nmethod=auto\n\n[ipv6]\nmethod=auto\n' "$ssid" "$psk" > "$nm")
+    chown 0:0 "$nm"; chmod 600 "$nm"
+    unset ssid psk
+    echo "wifi profile added"
+else
+    echo "no wifi profile (build/wifi.ssid empty or missing)"
+fi
 
 # Build stamp.
 echo "built $(date -u +%FT%TZ) kernel $KREL" > "$R/etc/pixel2-build"
