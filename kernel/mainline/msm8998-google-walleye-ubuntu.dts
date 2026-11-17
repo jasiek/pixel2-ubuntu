@@ -382,3 +382,115 @@
 		};
 	};
 };
+
+/* Camera M3: Easel. bcm15602-easel and easel-mipi are modules (ubuntu.config),
+ * so PCIe waits for easel_vddpe until bcm15602-easel is loaded. */
+/* =====================================================================
+ * CAMERA M3 -- Easel MIPI bridge (needed for any frame; CCI chip-ID reads
+ * work without it). Copied from TDTS:711-878; every walleye value
+ * confirmed against DTBO:3875-4093 / HEASEL. Easel enumerates on this
+ * phone under 4.4 (DMESG: 8086:3140, BAR 4K/8M/4M).
+ * RAM-BOOT ONLY: a mis-sized BAR window hung taimen's fabric (TDTS:727-729).
+ * ===================================================================== */
+&pcie_phy {
+	status = "okay";
+};
+
+&pcie0 {
+	status = "okay";
+
+	/* Same windows as walleye's DTBO fragment@121 (DTBO:3879-3880). */
+	reg = <0x01c00000 0x2000>,
+	      <0x1b000000 0xf1d>,
+	      <0x1b000f20 0xa8>,
+	      <0x1b010000 0x20000>;
+	reg-names = "parf", "dbi", "elbi", "config";
+
+	ranges = <0x01000000 0x0 0x1b030000 0x1b030000 0x0 0x20000>,
+		 <0x02000000 0x0 0x1b100000 0x1b100000 0x0 0xf00000>;
+
+	vddpe-3v3-supply = <&easel_vddpe>;
+
+	pcie@0 {
+		endpoint-powered-off-in-suspend;
+	};
+
+	/*
+	 * NOT EXPRESSIBLE: walleye's vendor PHY sequence ends with an extra
+	 * TX_DRV_LVL = 0x2d (DTBO:3881 last triple; HEASEL:106) that
+	 * taimen and the SoC table lack. If link training is flaky on
+	 * walleye, that is a driver-table change, not a DT one.
+	 */
+};
+
+&blsp2_i2c3 {	/* downstream i2c_9 (DTBO fixup i2c_9, :5359) */
+	status = "okay";
+
+	bcm15602: pmic@8 {	/* DTBO:4020-4030; HEASEL:218-246 */
+		compatible = "brcm,bcm15602";
+		reg = <0x08>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <26 IRQ_TYPE_EDGE_FALLING>;
+		interrupt-names = "bcm15602_intb";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&bcm15602_default>;
+
+		pon-gpios = <&tlmm 25 GPIO_ACTIVE_HIGH>;
+		resetb-gpios = <&tlmm 91 GPIO_ACTIVE_HIGH>;
+
+		/* mnh-sm ref_clk / sleep_clk (DTBO:4085-4087; HEASEL:278-280) */
+		clocks = <&rpmcc RPM_SMD_LN_BB_CLK2>,
+			 <&rpmcc RPM_SMD_DIV_CLK3>;
+		clock-names = "ref", "sleep";
+
+		regulators {
+			easel_vddpe: easel_vddpe {
+				regulator-name = "easel_vddpe";
+			};
+		};
+	};
+};
+
+&tlmm {
+	bcm15602_default: bcm15602-default-state {	/* DTBO:3890-3943 */
+		pon-pins {
+			pins = "gpio25";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+		};
+
+		intb-pins {
+			pins = "gpio26";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-up;
+		};
+
+		resetb-pins {
+			pins = "gpio91";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-down;
+		};
+	};
+
+	/* Unreferenced, as on taimen (TDTS:863); DTBO:3946-3976. */
+	easel_default: easel-default-state {
+		ready-pins {
+			pins = "gpio27";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-pull-down;
+		};
+
+		boot-mode-pins {
+			pins = "gpio28";
+			function = "gpio";
+			drive-strength = <2>;
+			bias-disable;
+		};
+	};
+};
