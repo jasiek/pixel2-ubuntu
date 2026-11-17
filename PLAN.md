@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P9.1 (one-command build). P8.1 parked (display driver, see log). Also open: pick the phone's job
+## ▶ RESUME HERE: owner checks P8.1 (tap the screen: console; 5 min: dark), then P9.1 (one-command build). Also open: pick the phone's job
 
 ---
 
@@ -148,8 +148,9 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Screen dark after **5 min** without touch; **touching the screen** wakes it and shows the console. Never a static image left lit (OLED burn-in).
   - Pieces: touch = Synaptics `synaptics_dsx_core_htc` module (`synaptics_dsxv26`, event2); kernel VT/fbcon (reset the phone in P5.0 with our own DTB; retest with the factory DTB, variant `kernel/walleye-ubuntu-vt.config`); a small daemon: touch → unblank, idle 5 min → panel off (the pixel2-headless sequence).
   - Gate: cold boot → dark; tap → console visible; 5 min untouched → dark again.
-  - **Blocked (2026-11-17), see log:** fbcon can't work (no fb memory → NULL deref → reset). Userspace drawing (mmap + FBIOPAN_DISPLAY) fails one layer down: every panel power-on fails (`cmd_dma_tx` for DCS 0x51, then "wait4pingpong timed out due to no TE"), even straight from the splash. Touch wake works (events arrive with the panel off); `pixel2-screen` (touch → on, 5 min → off) is written but not enabled.
-  - Deep-dive 2026-11-17 (2 h, see log): power, reset, clocks, TE pin mux and all panel-on commands are fine; the first MDP frame never completes (with or without HW tear-check). Next idea: drive the panel the way Android's HWC does (MSMFB_ATOMIC_COMMIT with a real buffer) instead of fbdev unblank/pan, or instrument the DSI error registers. Parked.
+  - **Built (2026-11-17, see log):** `tools/pixel2-screen.c` (C, `scripts/build-screen.sh`) draws into the mmapped fb0 itself (no fbcon: mdss_fb has no fb memory until userspace mmaps). It clears the splash at boot (one black frame, then close = panel off), wakes on touch/volume, shows `pixel2-console` (status header + journal) on a pseudo-terminal through a small terminal emulator, and closes fb0 after `IDLE=300` s. Replaces pixel2-headless, whose blank-ioctl sequence broke later power-ups.
+  - Verified by webcam: cold boot → dark; fake volume-key press → console; 30 s test idle → dark; wakes again. **Left for the owner:** a real finger tap, and the 5 min timeout in normal use.
+  - Not done: a real tty1 login. Kernels with CONFIG_VT reset the phone very early (also without fbcon, no pstore trace); no keyboard anyway.
 - [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed.
 - [ ] **P8.3** Revisit a mainline kernel (msm8998 work done for the Pixel 2 XL).
 
