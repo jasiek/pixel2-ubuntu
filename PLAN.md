@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P8.3.6 (mainline: boot the real Ubuntu rootfs via `fastboot boot`, then charger/LED, wifi). Waiting: P9.2 gate. Also open: pick the phone's job
+## ▶ RESUME HERE: P8.3.6 (mainline: wifi done; next stable wifi MAC, then charge-limit/LED variants, then display+touch). Waiting: P9.2 gate. Also open: pick the phone's job
 
 ---
 
@@ -162,7 +162,8 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] UFS + USB gadget + rootfs: _Ubuntu 24.04 runs on 7.2.2 (2026-11-17): running, 0 failed, cgroup2, cpufreq present._
     - [x] Charger + fuel gauge + RGB LED: _work (battery %, voltage, charging; rgb:status lights)._
     - [ ] Mainline variants of pixel2-charge-limit (input suspend via charger `status`) and pixel2-status-led (rgb:status pattern trigger).
-    - [ ] Wifi: modem (MSS) + ath10k with the wahoo carveouts; firmware paths for mainline (qcom/msm8998/wahoo/*).
+    - [x] Wifi: modem (MSS) + ath10k with the wahoo carveouts; firmware paths for mainline (qcom/msm8998/wahoo/*). Works 2026-11-17: `scripts/stage-mainline-wifi.sh` (firmware from the phone's own partitions), rmtfs + tqftpserv + diag-router, `ath regd_override=0x67`.
+    - [ ] Wifi follow-ups: stable MAC (mainline gets a new random one each boot, so a new DHCP IP: .45, .46); bake firmware + tools into build-rootfs.sh (now staged by hand); IPA/rmnet (mobile data, needs SIM: parked with P8.2).
     - [ ] Display (S6E3FA5 panel driver) + touch (rmi4): console on mainline, and a real VT login.
     - [ ] Then decide: flash mainline as the default kernel (boot_a/b) or keep it on `fastboot boot`.
 
