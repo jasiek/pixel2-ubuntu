@@ -258,3 +258,127 @@
 &cam_mclk1_default {
 	drive-strength = <8>;
 };
+
+/* Camera M4 before M3 (Easel): the sensor probe (chip ID over CCI) needs
+ * no Easel; only streaming does (imx179.c easel_mipi_set_rate/kick). */
+/* =====================================================================
+ * CAMERA M4 -- front sensor IMX179 + its EEPROM.
+ * Rails are PMIC-GPIO-switched (1-based numbering, as TDTS:977-983).
+ * Enables are active-high: the vendor lib drives them HIGH to power up
+ * (VEND libmmcamera_imx179.so @0x7f0/@0x800, config 2 = GPIO_OUT_HIGH).
+ * The vendor DTBO only sets their BOOT level high (invert=1, DTBO:4624,
+ * :4634); here they start low -- see risks.
+ * ===================================================================== */
+/ {
+	cam1_dvdd: regulator-cam1-dvdd {
+		compatible = "regulator-fixed";
+		regulator-name = "cam1_dvdd_1v2";	/* DTBO:4532 */
+		regulator-min-microvolt = <1200000>;
+		regulator-max-microvolt = <1200000>;
+		gpio = <&pmi8998_gpios 6 GPIO_ACTIVE_HIGH>;	/* DTBO:4528 */
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam1_dvdd_en>;
+	};
+
+	cam1_avdd: regulator-cam1-avdd {
+		compatible = "regulator-fixed";
+		/* 2.85 V per walleye (DTBO:4532, XA:426); taimen said 2.7 V.
+		 * Informational only: imx179.c never sets a voltage. */
+		regulator-name = "cam1_avdd_2v85";
+		regulator-min-microvolt = <2850000>;
+		regulator-max-microvolt = <2850000>;
+		gpio = <&pmi8998_gpios 3 GPIO_ACTIVE_HIGH>;	/* DTBO:4530 */
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam1_avdd_en>;
+	};
+};
+
+&pmi8998_gpios {
+	/* DTBO:4629-4636 gpio@c500: mode out, no pull, vin-sel 0 */
+	cam1_dvdd_en: cam1-dvdd-en-state {
+		pins = "gpio6";
+		function = "normal";
+		bias-disable;
+		drive-push-pull;
+		output-low;
+		power-source = <0>;
+		qcom,drive-strength = <1>;	/* UNCONFIRMED: copied from TDTS */
+	};
+
+	/* DTBO:4619-4626 gpio@c200: same */
+	cam1_avdd_en: cam1-avdd-en-state {
+		pins = "gpio3";
+		function = "normal";
+		bias-disable;
+		drive-push-pull;
+		output-low;
+		power-source = <0>;
+		qcom,drive-strength = <1>;	/* UNCONFIRMED: copied from TDTS */
+	};
+};
+
+&camss {
+	ports {
+		/* CSIPHY1/CSID1 (DTBO:4524-4525), 4 lanes (camera_config.xml:126) */
+		port@1 {
+			reg = <1>;
+			camss_ep_front: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&imx179_ep>;
+			};
+		};
+	};
+};
+
+&cci_i2c1 {
+	/* VEND libmmcamera_sony_imx179_eeprom.so @0x17b4: 0xA2 -> 0x51,
+	 * 16-bit addressed, 0x758 bytes. Same as taimen (TDTS:1229). */
+	eeprom@51 {
+		compatible = "atmel,24c32";
+		reg = <0x51>;
+		vcc-supply = <&vreg_lvs1a_1p8>;
+		read-only;
+	};
+
+	/* VEND libmmcamera_imx179.so @0x7c8: 0x20 -> 0x10 */
+	imx179: camera@10 {
+		compatible = "sony,imx179";
+		reg = <0x10>;
+
+		orientation = <0>;
+		/*
+		 * UNCONFIRMED. Vendor mount angle is 270 here (DTBO:4526,
+		 * camera_config.xml:123) vs 90 on taimen (TCAM:209), whose
+		 * owner-verified mainline value is 90 (TDTS:1250-1256). The
+		 * module is turned 180 deg relative to taimen, hence 270.
+		 * Verify on the live viewfinder (mind the selfie mirror).
+		 */
+		rotation = <270>;
+
+		clocks = <&mmcc CAMSS_MCLK1_CLK>;	/* no assigned-clocks: TDTS:1270-1278 */
+		power-domains = <&mmcc CAMSS_TOP_GDSC>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk1_default>;
+
+		reset-gpios = <&tlmm 23 GPIO_ACTIVE_LOW>;	/* DTBO:4539 */
+
+		vio-supply = <&vreg_lvs1a_1p8>;			/* DTBO:4529 */
+		vdig-supply = <&cam1_dvdd>;
+		vana-supply = <&cam1_avdd>;
+
+		port {
+			imx179_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1 2 3>;
+				/* same op_pixel_clk table as taimen
+				 * (VEND @0xa8be0 / @0xa8ca0) */
+				link-frequencies = /bits/ 64 <170000000 270000000 324000000>;
+				remote-endpoint = <&camss_ep_front>;
+			};
+		};
+	};
+};
