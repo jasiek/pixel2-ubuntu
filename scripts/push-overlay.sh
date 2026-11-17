@@ -5,4 +5,4 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 COPYFILE_DISABLE=1 tar --no-xattrs -C rootfs/overlay -cf - . \
-    | scripts/ssh.sh "sudo date -s @$(date +%s) >/dev/null && sudo tar -C / -m --no-same-owner --no-overwrite-dir -xf - && sudo systemctl daemon-reload && echo 'overlay pushed'"
+    | scripts/ssh.sh "sudo date -s @$(date +%s) >/dev/null && sudo tar -C / -m --no-same-owner --no-overwrite-dir -xf - && sudo chmod 600 /etc/NetworkManager/system-connections/*.nmconnection && sudo systemctl daemon-reload && echo 'overlay pushed'"
