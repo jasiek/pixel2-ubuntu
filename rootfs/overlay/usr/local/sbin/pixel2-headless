@@ -1,6 +1,12 @@
 #!/bin/sh
-# Headless: no one looks at the screen. Backlight off, panel blanked
-# (the bootloader leaves the backlight on at ~50%).
+# Headless: no one looks at the screen, and it's an OLED (a static image
+# burns in). The bootloader leaves its splash lit ("continuous splash") and
+# the kernel only takes the panel over on the first unblank. So: unblank
+# (take over), then power the panel down. Needs the factory DTB (panel node).
+fb=/sys/class/graphics/fb0
 echo 0 > /sys/class/leds/lcd-backlight/brightness 2>/dev/null
-echo 1 > /sys/class/graphics/fb0/blank 2>/dev/null
+echo 0 > $fb/blank 2>/dev/null
+sleep 1
+echo 4 > $fb/blank 2>/dev/null          # FB_BLANK_POWERDOWN
+cat $fb/show_blank_event 2>/dev/null    # expect panel_power_on = 0
 exit 0
