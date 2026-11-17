@@ -5,7 +5,7 @@
 [Unit]
 Description=Qualcomm DIAG router (modem diagnostics drain)
 ConditionKernelVersion=>=5
-After=rmtfs.service
+Before=rmtfs.service
 
 [Service]
 ExecStart=/usr/local/sbin/diag-router
