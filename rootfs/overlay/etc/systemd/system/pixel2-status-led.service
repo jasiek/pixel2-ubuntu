@@ -1,6 +1,6 @@
-# Steady dim green LED = Ubuntu is up. Dark = off, booting or shutting down.
+# Dim green pulse (never fully dark) = Ubuntu is up. Dark = off, booting or shutting down.
 [Unit]
-Description=Status LED: steady green while the system is up
+Description=Status LED: pulse green while the system is up
 After=multi-user.target ssh.service
 
 [Service]

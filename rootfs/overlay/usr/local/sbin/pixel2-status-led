@@ -1,32 +1,48 @@
 #!/bin/sh
-# "Phone is on" indicator: the RGB notification LED glows steady dim green
-# once Ubuntu is up, and goes dark at shutdown. Steady, not breathing: the
-# owner wants it never fully dark while running, and the kernel's breathing
-# table always ramps down to 0 (rgb_duration_config). off_ms = 0 = steady.
+# "Phone is on" indicator: the RGB notification LED pulses dim green (never
+# fully dark) once Ubuntu is up, and goes dark at shutdown.
 #
-#   pixel2-status-led start [r g b] [on_ms off_ms]   (off_ms > 0: breathe)
-#   pixel2-status-led stop
+#   pixel2-status-led [start]   pulse green between MIN and MAX percent
+#   pixel2-status-led stop      LED off
 #
-# This kernel (leds-qpnp.c) ignores plain `brightness` writes for the RGB LED
-# (the RGB case in __qpnp_led_work is a no-op), so triggers like heartbeat
-# can't drive it. The Android lights-HAL path works: store each colour's
-# brightness, set on_off_ms, then write rgb_start. The PMIC then holds
-# the level (or runs a breathing pattern) by itself, with no CPU wakeups.
-# Check: PMI8998 register 0xd046 (RGB enable) = e0 for all three channels.
+# How this kernel's LED driver (leds-qpnp.c) works, and why it's done this way:
+# - Plain `brightness` writes do nothing for the RGB LED (the RGB case in
+#   __qpnp_led_work is empty), so LED triggers (heartbeat...) can't drive it.
+# - `rgb_start` is what lights it (Android's lights-HAL path). The PMIC then
+#   runs a lookup-table (LUT) pattern by itself, with no CPU wakeups.
+# - If `on_off_ms` was ever written, rgb_start rebuilds the LUT from it, and
+#   that table always ramps down to 0 (dark). With on_ms still 0 (never
+#   written since boot) rgb_start keeps the LUT we load via duty_pcts, so the
+#   pulse can have a floor. So: never write on_off_ms.
+# Check: PMI8998 register 0xd046 (RGB enable) = 40 for green only:
+#   sudo grep ^d046 /sys/kernel/debug/regmap/spmi0-03/registers
 L=/sys/class/leds
+LED=${LED:-green}
+MIN=${MIN:-3} MAX=${MAX:-20} STEPS=${STEPS:-12}   # duty percent, table length
+STEP_MS=${STEP_MS:-80}                            # per table entry
+PAUSE_HI_MS=${PAUSE_HI_MS:-200} PAUSE_LO_MS=${PAUSE_LO_MS:-500}
+
 case "${1:-start}" in
 start)
-    r=${2:-0} g=${3:-24} b=${4:-0} on=${5:-1000} off=${6:-0}
-    for c in red green blue; do
-        eval v=\$${c%"${c#?}"}           # r / g / b
-        echo "$v" > $L/$c/brightness
-        echo "$on $off" > $L/$c/on_off_ms
-    done
+    if [ "$(cat $L/$LED/on_off_ms)" != "0 0" ] 2>/dev/null; then
+        echo "pixel2-status-led: on_off_ms was set this boot; the floor needs a reboot" >&2
+    fi
+    for c in red green blue; do echo 0 > $L/$c/brightness; done
+    duty=$(awk -v a="$MIN" -v b="$MAX" -v n="$STEPS" 'BEGIN {
+        for (i = 0; i < n; i++) printf "%s%d", (i ? "," : ""), a + (b - a) * i / (n - 1) + 0.5 }')
+    d=$L/$LED
+    echo "$STEP_MS"     > $d/ramp_step_ms
+    echo "$PAUSE_HI_MS" > $d/pause_hi
+    echo "$PAUSE_LO_MS" > $d/pause_lo
+    echo 31             > $d/lut_flags     # loop|ramp_up|reverse|pause_hi|pause_lo
+    echo "$duty"        > $d/duty_pcts
+    echo 255            > $d/brightness    # just "on"; the LUT sets the level
     echo 1 > $L/green/rgb_start
+    echo "pixel2-status-led: $LED pulsing, duty $duty %"
     ;;
 stop)
     for c in red green blue; do echo 0 > $L/$c/brightness; done
     echo 1 > $L/green/rgb_start
     ;;
-*)  echo "usage: $0 start [r g b] [on_ms off_ms] | stop" >&2; exit 2 ;;
+*)  echo "usage: $0 [start|stop]" >&2; exit 2 ;;
 esac
