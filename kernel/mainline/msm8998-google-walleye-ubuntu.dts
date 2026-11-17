@@ -32,3 +32,56 @@
 &blsp1_uart3 { status = "disabled"; };
 &pmi8998_charger { status = "disabled"; };
 &pmi8998_fg { status = "disabled"; };
+
+/*
+ * Test boot 2 reset ~4 s after the bootloader let go (no USB). Reserve
+ * everything the stock walleye layout (factory DTB + dtbo idx 3) reserves
+ * that Porthole's taimen-derived map doesn't: memory still owned by
+ * firmware/coprocessors would explain an instant reset.
+ */
+/ {
+	reserved-memory {
+		easel@95c00000 {	/* Pixel Visual Core (stock: easel_mem) */
+			reg = <0x0 0x95c00000 0x0 0x4000000>;
+			no-map;
+		};
+		splash@9d600000 {	/* bootloader splash framebuffer */
+			reg = <0x0 0x9d600000 0x0 0x2400000>;
+			no-map;
+		};
+		htc-reserve@a1300000 {
+			reg = <0x0 0xa1300000 0x0 0x500000>;
+			no-map;
+		};
+		htc-rtel@a1800000 {
+			reg = <0x0 0xa1800000 0x0 0x2000000>;
+			no-map;
+		};
+		alt-ramoops@a3800000 {
+			reg = <0x0 0xa3800000 0x0 0x200000>;
+			no-map;
+		};
+		ramoops-meta@affff000 {
+			reg = <0x0 0xaffff000 0x0 0x1000>;
+			no-map;
+		};
+	};
+};
+
+/*
+ * ramoops on the stock region with the stock layout, so the downstream
+ * kernel (booted after a mainline crash) can show the mainline log in
+ * /sys/fs/pstore.
+ */
+/delete-node/ &ramoops;
+/ {
+	reserved-memory {
+		ramoops@a1100000 {
+			compatible = "ramoops";
+			reg = <0x0 0xa1100000 0x0 0x200000>;
+			record-size = <0x20000>;
+			console-size = <0x100000>;
+			pmsg-size = <0x80000>;
+		};
+	};
+};
