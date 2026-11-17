@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: Phase 7 done (screen off, charge limit verified). Next: pick the phone's job; Phase 8 optional, P8.4 (status LED) last
+## ▶ RESUME HERE: P8.4 (status LED: "phone is on" indicator). Also open: pick the phone's job
 
 ---
 
@@ -139,10 +139,10 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Gate: SSH works after every reboot.
 
 ## Phase 8: Optional stretch (decide later)
-- [ ] **P8.1** Screen: text console on the framebuffer, then a kiosk if the device's job needs a screen.
-- [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed.
-- [ ] **P8.3** Revisit a mainline kernel (msm8998 work done for the Pixel 2 XL).
-- [ ] **P8.4** "Phone is on" indicator with the built-in notification LED (owner request, 2026-11-17; do this last). The screen is off for good (OLED burn-in), so nothing shows the phone is alive.
+- [ ] **P8.4** "Phone is on" indicator with the built-in notification LED (owner request, 2026-11-17; moved first by owner). The screen is off for good (OLED burn-in), so nothing shows the phone is alive.
   - Already seen: `/sys/class/leds/` has `red`, `green`, `blue` (RGB notification LED) next to `lcd-backlight`, torch and vibrator.
   - Investigate: brightness range, `trigger` options (`timer`/`heartbeat` for a slow blink), power cost. Ideas: dim slow blink = running, other colour = no wifi / low battery.
   - Gate: LED shows the state after a cold boot, without a login.
+- [ ] **P8.1** Screen: text console on the framebuffer, then a kiosk if the device's job needs a screen.
+- [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed.
+- [ ] **P8.3** Revisit a mainline kernel (msm8998 work done for the Pixel 2 XL).
