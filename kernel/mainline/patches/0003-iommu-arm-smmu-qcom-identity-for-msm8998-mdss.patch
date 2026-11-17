@@ -1,0 +1,21 @@
+From: pixel2 ubuntu port
+Subject: [PATCH] iommu/arm-smmu-qcom: default to identity for MSM8998 MDSS
+
+The Pixel 2 (walleye) bootloader leaves the display engine fetching when
+it jumps to the kernel. Once mmss_smmu probes (~0.5 s) the enabled MDSS
+node is put into a translated DMA domain with an empty page table, and
+the next MDP fetch resets the SoC (no log; UFS isn't even up yet).
+Removing "iommus" from the MDSS node avoids the reset, which pins it on
+the SMMU attach. Newer SoCs' MDSS are already in this list for the same
+continuous-splash reason; the msm driver attaches its own domain later.
+---
+--- a/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
++++ b/drivers/iommu/arm/arm-smmu/arm-smmu-qcom.c
+@@ -411,6 +411,7 @@
+ 	{ .compatible = "qcom,glymur-mdss" },
+ 	{ .compatible = "qcom,mdp4" },
+ 	{ .compatible = "qcom,mdss" },
++	{ .compatible = "qcom,msm8998-mdss" },
+ 	{ .compatible = "qcom,msm8998-mss-pil" },
+ 	{ .compatible = "qcom,qcm2290-mdss" },
+ 	{ .compatible = "qcom,sar2130p-mdss" },

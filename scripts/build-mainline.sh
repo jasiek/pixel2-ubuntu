@@ -23,10 +23,17 @@ if [ ! -f /.dockerenv ]; then
         git submodule update --init external/linux-mainline external/porthole-pmaports
     fi
     want="$(cat "$PKG/APKBUILD" "$PKG"/*.patch | shasum -a 256 | cut -c1-16) $(git -C external/linux-mainline rev-parse HEAD)"
-    ours="$(cat kernel/mainline/patches/*.patch 2>/dev/null | shasum -a 256 | cut -c1-16)"
+    # Our own patches (kernel/mainline/patches) go on top. build/mainline/src/.ours
+    # lists "name sha" of those applied. New patches appended to the list are
+    # applied in place (no full rebuild); a changed or removed one recopies.
+    ours=$(for f in kernel/mainline/patches/*.patch; do [ -e "$f" ] && echo "$(basename "$f") $(shasum -a 256 < "$f" | cut -c1-16)"; done)
     have_ours="$(cat build/mainline/src/.ours 2>/dev/null || true)"
-    if [ "$(cat build/mainline/src/.porthole 2>/dev/null)" != "$want" ] \
-        || { [ -n "$have_ours" ] && [ "$have_ours" != "$ours" ]; }; then
+    case "$ours" in
+        "$have_ours"*) prefix_ok=1 ;;
+        *) prefix_ok=0 ;;
+    esac
+    [ -z "$have_ours" ] && prefix_ok=1
+    if [ "$(cat build/mainline/src/.porthole 2>/dev/null)" != "$want" ] || [ "$prefix_ok" = 0 ]; then
         echo "Copying the kernel tree to build/mainline/src"
         rm -rf build/mainline/src build/mainline/out
         mkdir -p build/mainline
@@ -36,11 +43,10 @@ if [ ! -f /.dockerenv ]; then
         echo "$want" > build/mainline/src/.porthole
         have_ours=""
     fi
-    # Our own patches (kernel/mainline/patches) go on top. Applied in place when
-    # the tree has none yet, so adding the first one doesn't force a full rebuild.
-    if [ -z "$have_ours" ]; then
-        scripts/dev.sh /work/scripts/build-mainline.sh ours
-        echo "$ours" > build/mainline/src/.ours
+    todo=$(printf '%s\n' "$ours" | tail -n +"$(( $(printf '%s' "$have_ours" | grep -c .) + 1 ))" | cut -d' ' -f1 | tr '\n' ' ')
+    if [ -n "${todo// }" ]; then
+        scripts/dev.sh /work/scripts/build-mainline.sh ours $todo
+        printf '%s\n' "$ours" > build/mainline/src/.ours
     fi
     exec scripts/dev.sh /work/scripts/build-mainline.sh build
 fi
@@ -60,8 +66,9 @@ if [ "${1:-}" = patch ]; then
     exit 0
 fi
 if [ "${1:-}" = ours ]; then
-    for f in /work/kernel/mainline/patches/*.patch; do
-        [ -e "$f" ] || continue
+    shift
+    for n in "$@"; do
+        f=/work/kernel/mainline/patches/$n
         patch -d "$SRC" -p1 -s --no-backup-if-mismatch -i "$f" || { echo "FAILED: $f"; exit 1; }
         echo "applied $(basename "$f")"
     done
