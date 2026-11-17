@@ -1,0 +1,7 @@
+#!/bin/sh
+# The clock starts a month behind (no RTC sync; systemd's build-time floor).
+# timesyncd starts before any network and then backs off, so it can take a
+# long time to notice wifi. Kick it whenever an interface comes up.
+case "$2" in
+    up|connectivity-change) systemctl try-restart systemd-timesyncd.service ;;
+esac
