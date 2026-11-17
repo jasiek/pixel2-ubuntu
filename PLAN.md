@@ -148,6 +148,8 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Screen dark after **5 min** without touch; **touching the screen** wakes it and shows the console. Never a static image left lit (OLED burn-in).
   - Pieces: touch = Synaptics `synaptics_dsx_core_htc` module (`synaptics_dsxv26`, event2); kernel VT/fbcon (reset the phone in P5.0 with our own DTB; retest with the factory DTB, variant `kernel/walleye-ubuntu-vt.config`); a small daemon: touch → unblank, idle 5 min → panel off (the pixel2-headless sequence).
   - Gate: cold boot → dark; tap → console visible; 5 min untouched → dark again.
+  - **Blocked (2026-11-17), see log:** fbcon can't work (no fb memory → NULL deref → reset). Userspace drawing (mmap + FBIOPAN_DISPLAY) fails one layer down: every panel power-on fails (`cmd_dma_tx` for DCS 0x51, then "wait4pingpong timed out due to no TE"), even straight from the splash. Touch wake works (events arrive with the panel off); `pixel2-screen` (touch → on, 5 min → off) is written but not enabled.
+  - Next to try: find why the DSI link doesn't come up on unblank (panel power-on sequence, regulators, TE gpio, continuous-splash handoff; compare with the stock driver's expectations); a userspace renderer is ready once the panel can be powered on.
 - [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed.
 - [ ] **P8.3** Revisit a mainline kernel (msm8998 work done for the Pixel 2 XL).
 

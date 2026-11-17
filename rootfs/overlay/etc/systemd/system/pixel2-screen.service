@@ -1,0 +1,14 @@
+# Text console on the screen: dark after 5 min without input, a touch wakes it.
+# Replaces pixel2-headless.service (it calls pixel2-headless to switch off).
+[Unit]
+Description=Screen: touch to wake the console, off after 5 min idle
+After=systemd-modules-load.service getty@tty1.service
+
+[Service]
+Environment=IDLE=300
+ExecStart=/usr/local/sbin/pixel2-screen
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
