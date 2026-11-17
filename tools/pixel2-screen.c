@@ -22,6 +22,12 @@
  *
  * Font: the kernel's 8x16 VGA font (CP437), scaled 2x: 67 x 60 characters.
  * Env: IDLE (s, default 300), SCALE (1-4, default 2), CMD, VCSA.
+ *
+ * Mainline kernel (fb0 is a DRM fbdev, "msmdrmfb"): fbcon already draws the
+ * VT on the panel, so nothing is drawn here. CMD runs on /dev/tty1 (shown by
+ * fbcon; font TER16x32 from the cmdline gives the same 67 x 60 grid) and the
+ * panel is switched with /sys/class/graphics/fb0/blank (0 = on, 4 = off,
+ * which disables the DSI panel).
  */
 #define _GNU_SOURCE
 #include <errno.h>
@@ -51,7 +57,7 @@
 #define MAXC     160
 #define DEF_ATTR 0x07 /* light grey on black */
 
-static const char *input_names[] = { "synaptics_dsxv26", "gpio-keys" };
+static const char *input_names[] = { "synaptics_dsxv26", "gpio-keys", "Synaptics S3708AR" };
 
 /* VGA palette (R, G, B) for the 16 console colours. */
 static const uint8_t pal[16][3] = {
@@ -530,6 +536,58 @@ static int has_touch(void)
 	return found;
 }
 
+/* ------------------------------------------------- mainline (fbcon) -- */
+
+static int fbcon_mode, con_on;
+
+static int fb0_is_drm(void)
+{
+	char name[64] = "";
+	FILE *f = fopen("/sys/class/graphics/fb0/name", "r");
+	if (!f)
+		return 0;
+	if (!fgets(name, sizeof(name), f))
+		name[0] = 0;
+	fclose(f);
+	return strstr(name, "drmfb") != NULL;
+}
+
+static void fb0_blank(int level)
+{
+	FILE *f = fopen("/sys/class/graphics/fb0/blank", "w");
+	if (!f) {
+		logmsg("fb0/blank: %s", strerror(errno));
+		return;
+	}
+	fprintf(f, "%d\n", level);
+	fclose(f);
+}
+
+/* Start CMD with /dev/tty1 as its controlling terminal (fbcon shows it). */
+static int start_cmd_tty1(const char *cmd, pid_t *pid)
+{
+	*pid = fork();
+	if (*pid < 0)
+		return -1;
+	if (*pid == 0) {
+		setsid();
+		int t = open("/dev/tty1", O_RDWR);
+		if (t < 0)
+			_exit(127);
+		ioctl(t, TIOCSCTTY, 1);
+		dup2(t, 0);
+		dup2(t, 1);
+		dup2(t, 2);
+		if (t > 2)
+			close(t);
+		setenv("TERM", "linux", 1);
+		execl("/bin/sh", "sh", "-c", cmd, (char *)NULL);
+		_exit(127);
+	}
+	logmsg("running \"%s\" on /dev/tty1 (pid %d)", cmd, (int)*pid);
+	return 0;
+}
+
 /* ---------------------------------------------------------------- main -- */
 
 static volatile sig_atomic_t stop;
@@ -537,6 +595,14 @@ static void on_signal(int sig) { (void)sig; stop = 1; }
 
 static void screen_on(void)
 {
+	if (fbcon_mode) {
+		if (!con_on) {
+			fb0_blank(0);
+			con_on = 1;
+			logmsg("on");
+		}
+		return;
+	}
 	if (fb >= 0 || fb_on())
 		return;
 	fill_black();
@@ -550,6 +616,14 @@ static void screen_on(void)
 
 static void screen_off(void)
 {
+	if (fbcon_mode) {
+		if (con_on) {
+			fb0_blank(4);
+			con_on = 0;
+			logmsg("off");
+		}
+		return;
+	}
 	if (fb < 0)
 		return;
 	fill_black();
@@ -570,8 +644,13 @@ int main(void)
 	signal(SIGINT, on_signal);
 	signal(SIGPIPE, SIG_IGN);
 
-	/* Hand the panel over from the bootloader splash, then dark. */
-	if (fb_on() == 0) {
+	fbcon_mode = fb0_is_drm();
+	if (fbcon_mode) {
+		con_on = 1;		/* fbcon unblanks at boot */
+		screen_off();
+		logmsg("mainline: fbcon on tty1, panel off");
+	} else if (fb_on() == 0) {
+		/* Hand the panel over from the bootloader splash, then dark. */
 		fill_black();
 		pan();
 		nrows = var.yres / (16 * scale);
@@ -587,7 +666,9 @@ int main(void)
 	use_vcsa = getenv("VCSA") && atoi(getenv("VCSA")) && access(VCSA_DEV, R_OK) == 0;
 	pid_t child = 0;
 	int pty = -1;
-	if (use_vcsa)
+	if (fbcon_mode)
+		start_cmd_tty1(cmd, &child);
+	else if (use_vcsa)
 		size_vt();
 	else
 		pty = start_cmd(cmd, &child);
@@ -605,8 +686,8 @@ int main(void)
 	double last_input = 0, last_frame = 0;
 	int dirty = 0;
 	while (!stop) {
-		int on = fb >= 0;
-		int r = poll(pfd, nin + (pty >= 0), on ? 250 : -1);
+		int on = fbcon_mode ? con_on : fb >= 0;
+		int r = poll(pfd, nin + (pty >= 0), on ? 250 : (fbcon_mode ? 5000 : -1));
 		if (r < 0 && errno != EINTR)
 			break;
 		int touched = 0;
@@ -634,11 +715,18 @@ int main(void)
 					pfd[nin].fd = pty;
 			}
 		}
+		if (fbcon_mode && child > 0 && waitpid(child, NULL, WNOHANG) == child) {
+			sleep(2);	/* command exited: restart */
+			start_cmd_tty1(cmd, &child);
+		}
 		if (touched) {
 			last_input = now();
 			screen_on();
 		}
-		if (fb >= 0) {
+		if (fbcon_mode) {
+			if (con_on && now() - last_input >= idle)
+				screen_off();
+		} else if (fb >= 0) {
 			if (now() - last_input >= idle) {
 				screen_off();
 			} else if (use_vcsa || (dirty && now() - last_frame >= 0.1)) {

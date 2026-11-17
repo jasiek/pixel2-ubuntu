@@ -24,7 +24,7 @@ done
 
 scripts/push-overlay.sh
 # Drop-ins removed from the overlay since (push-overlay only adds files).
-scripts/ssh.sh 'sudo rm -rf /etc/systemd/system/pixel2-charge-limit.service.d /etc/systemd/system/pixel2-status-led.service.d && sudo systemctl daemon-reload'
+scripts/ssh.sh 'sudo rm -rf /etc/systemd/system/pixel2-charge-limit.service.d /etc/systemd/system/pixel2-status-led.service.d /etc/systemd/system/pixel2-screen.service.d && sudo systemctl daemon-reload'
 
 KREL=$(ls build/mainline/modules-install/lib/modules)
 COPYFILE_DISABLE=1 tar --no-xattrs -cf - -C build/mainline/modules-install/lib/modules "$KREL" \
