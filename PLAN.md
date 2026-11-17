@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P8.3.6 (mainline: everything works on `fastboot boot`; next bake firmware/tools/modules into build-all.sh, then the flash decision). Waiting: P9.2 gate. Also open: pick the phone's job
+## ▶ RESUME HERE: mainline 7.2.2 is the flashed kernel (boot_b). Next: wifi follow-ups (IPA/rmnet parked with P8.2), P8.5 camera. Waiting: P9.2 gate. Also open: pick the phone's job
 
 ---
 
@@ -152,13 +152,13 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Verified by webcam: cold boot → dark; fake volume-key press → console; 30 s test idle → dark; wakes again. **Left for the owner:** a real finger tap, and the 5 min timeout in normal use.
   - Not done: a real tty1 login. Kernels with CONFIG_VT reset the phone very early (also without fbcon, no pstore trace); no keyboard anyway.
 - [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed. _Parked 2026-11-17: owner has no SIM card (SMS, data and calls need one)._ Found so far: modem subsystem `ONLINE` (it also runs the wifi firmware, so it stays on); the kernel has the downstream IPC router (`CONFIG_IPC_ROUTER`), not upstream QRTR, so ModemManager/libqmi can't use their QRTR path; `qmicli --device-open-qmi` on `/dev/smdcntl8` got no reply (hung). Next if picked up: QMI over the IPC router (AF_MSM_IPC sockets) or a backported QRTR.
-- [ ] **P8.3** Mainline kernel (owner go 2026-11-17). Research: `docs/mainline.md` (nobody has booted mainline on walleye; start from Porthole 7.2.2 + patches).
+- [x] **P8.3** Mainline kernel (owner go 2026-11-17). Research: `docs/mainline.md` (nobody has booted mainline on walleye; start from Porthole 7.2.2 + patches).
   - [x] P8.3.1 _Done: walleye uses dtbo_idx 3 = id 444 rev 3 (dtbo.img is shared: idx 0–5 id 444 rev 0–4/0x80, idx 6–12 ids 400–2704 incl. taimen 2704)._ Read walleye's dtbo ids: `/proc/cmdline` dtbo_idx + parse `firmware/dtbo.img` entries (no flashing).
   - [x] P8.3.2 _Done: linux-stable v7.2.2 (52c36105) + porthole-pmaports taimen-bringup, shallow._ Sources as submodules: Porthole pmaports (patches) + linux-stable v7.2.2 (shallow).
   - [x] P8.3.3 _Done: `scripts/build-mainline.sh`, docker/mainline (clang 18), 10 min._ Build container with a modern toolchain + `scripts/build-mainline.sh` → Image.gz + walleye DTB (fix panel/touch nodes: drop taimen's; no bootargs).
   - [x] P8.3.4 _Done 2026-11-17: mainline 7.2.2 boots to our initramfs, USB serial works. Needed: `wahoo-dtbo-sink.dtsi` (stock overlay applies into dummy nodes), factory msm-id, no `earlycon`._ `fastboot boot` test with the **stock dtbo** (nothing flashed). Gate: USB serial/network from our initramfs.
   - [x] P8.3.5 _Not needed: the sink DTS avoids flashing dtbo._ Only if P8.3.4 fails on the overlay: crafted stub dtbo, flashed to the **inactive slot only** (owner OK first; current Ubuntu needs the stock dtbo for its panel).
-  - [ ] P8.3.6 Bring-up order (each step: `fastboot boot`, nothing flashed):
+  - [x] P8.3.6 Bring-up order (each step: `fastboot boot`, nothing flashed):
     - [x] UFS + USB gadget + rootfs: _Ubuntu 24.04 runs on 7.2.2 (2026-11-17): running, 0 failed, cgroup2, cpufreq present._
     - [x] Charger + fuel gauge + RGB LED: _work (battery %, voltage, charging; rgb:status lights)._
     - [x] _Done 2026-11-17 (tests 10, 12)._ Mainline variants of pixel2-charge-limit (input suspend via charger `status`) and pixel2-status-led (rgb:status pattern trigger).
@@ -166,7 +166,8 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] Stable MAC: _done (4.4 records it to /var/lib/pixel2/wlan0.mac, mainline applies it before NetworkManager; same IP .44 on both kernels)._
     - [ ] Wifi follow-ups: bake firmware + tools into build-rootfs.sh (now staged by hand); IPA/rmnet (mobile data, needs SIM: parked with P8.2).
     - [x] Display (S6E3FA5 panel driver) + touch (rmi4): _done 2026-11-17. Panel: patch 0002 + SMMU identity patch 0003. Touch: Synaptics S3708AR, l28 at 3.008 V (3.3 V froze boots, tests 25-30). pixel2-screen mainline mode: dark from boot, touch wakes the fbcon console on tty1 (TER16x32, 67x60), off after 5 min (test 34)._
-    - [ ] Then decide: flash mainline as the default kernel (boot_a/b) or keep it on `fastboot boot`.
+    - [x] Baked into `scripts/build-all.sh` (MAINLINE=0 skips): modules, modem tools, ath10k board data from the factory vendor.img, boot-mainline.img; modem firmware built on the phone at boot (`pixel2-modem-fw`).
+    - [x] _Flashed 2026-11-17 (owner: "flash it"): `boot_b` (active slot) = build/mainline/boot-mainline.img; boot_a still 4.4. Boots on its own and after `sudo reboot`: running in ~19 s, wifi .44. Back to 4.4: bootloader, `fastboot flash boot_b build/boot.img`._ Flash mainline as the default kernel.
 
 - [ ] **P8.5** Camera: take pictures and record video (owner request 2026-11-17).
   - Downstream 4.4 is a dead end: its camera stack (msm camera v2) only works with Android's proprietary camera HAL.
