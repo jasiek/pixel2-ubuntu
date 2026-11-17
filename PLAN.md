@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P9.1 (one-command build: build-all.sh written, first run in progress), then P9.2 (flash.sh drafted). Also open: pick the phone's job
+## ▶ RESUME HERE: P8.3 (mainline kernel: research running, then build + `fastboot boot` test). Waiting: P9.2 gate (someone flashes with README + flash.sh). Also open: pick the phone's job
 
 ---
 
@@ -156,7 +156,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
-- [ ] **P9.1** `scripts/build-all.sh`: one entry point that runs, in order and only when outdated:
+- [x] **P9.1** _Done 2026-11-17: fresh clone → both images, no manual steps, 11.5 min (kernel 6.5 min); rerun = all steps "up to date"; plus `scripts/get-firmware.sh`._ `scripts/build-all.sh`: one entry point that runs, in order and only when outdated:
   - `git submodule update --init` (kernel-msm, qbootctl);
   - build container (`docker/`), `build-kernel.sh`, `build-initramfs.sh`, `build-android-stubs.sh`, `build-qbootctl.sh`;
   - `build-bootimg.sh` (factory DTB) and `build-rootfs.sh` → `build/boot.img`, `build/rootfs.simg`.
@@ -170,4 +170,4 @@ Goal: on a fresh clone, one script builds everything and then walks the user thr
   4. Wait for the phone on USB/wifi, print the SSH command, check the LED pulse + screen off by asking the user.
   - Also a restore path: back to stock Android (`flash-all.sh`, vbmeta with verification).
   - Gate: someone else flashes a phone using only README + `scripts/flash.sh`.
-- [ ] **P9.3** README: replace the dev-notes flow with "build-all → flash", and keep PLAN.md/log.md as the history.
+- [x] **P9.3** _Done 2026-11-17._ README: replace the dev-notes flow with "build-all → flash", and keep PLAN.md/log.md as the history.
