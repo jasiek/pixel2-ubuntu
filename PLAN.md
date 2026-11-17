@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P7.3 (unplug USB, power off, press power; expect SSH over wifi)
+## ▶ RESUME HERE: P7.3 (retry: slot is now marked successful each boot; unplug USB, power on, expect SSH over wifi)
 
 ---
 
