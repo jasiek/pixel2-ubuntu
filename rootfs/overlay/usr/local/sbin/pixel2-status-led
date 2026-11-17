@@ -1,20 +1,22 @@
 #!/bin/sh
-# "Phone is on" indicator: the RGB notification LED breathes dim green once
-# Ubuntu is up, and goes dark at shutdown.
+# "Phone is on" indicator: the RGB notification LED glows steady dim green
+# once Ubuntu is up, and goes dark at shutdown. Steady, not breathing: the
+# owner wants it never fully dark while running, and the kernel's breathing
+# table always ramps down to 0 (rgb_duration_config). off_ms = 0 = steady.
 #
-#   pixel2-status-led start [r g b] [on_ms off_ms]
+#   pixel2-status-led start [r g b] [on_ms off_ms]   (off_ms > 0: breathe)
 #   pixel2-status-led stop
 #
 # This kernel (leds-qpnp.c) ignores plain `brightness` writes for the RGB LED
 # (the RGB case in __qpnp_led_work is a no-op), so triggers like heartbeat
 # can't drive it. The Android lights-HAL path works: store each colour's
-# brightness, set on_off_ms, then write rgb_start. The PMIC then runs the
-# pattern by itself (ramp up, pause, ramp down, pause) with no CPU wakeups.
+# brightness, set on_off_ms, then write rgb_start. The PMIC then holds
+# the level (or runs a breathing pattern) by itself, with no CPU wakeups.
 # Check: PMI8998 register 0xd046 (RGB enable) = e0 for all three channels.
 L=/sys/class/leds
 case "${1:-start}" in
 start)
-    r=${2:-0} g=${3:-24} b=${4:-0} on=${5:-1000} off=${6:-3000}
+    r=${2:-0} g=${3:-24} b=${4:-0} on=${5:-1000} off=${6:-0}
     for c in red green blue; do
         eval v=\$${c%"${c#?}"}           # r / g / b
         echo "$v" > $L/$c/brightness
