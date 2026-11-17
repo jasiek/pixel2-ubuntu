@@ -494,3 +494,211 @@
 		};
 	};
 };
+
+/* =====================================================================
+ * CAMERA M5 -- rear sensor IMX362.
+ * ===================================================================== */
+/ {
+	cam0_dvdd: regulator-cam0-dvdd {
+		compatible = "regulator-fixed";
+		regulator-name = "cam0_dvdd_1v05";		/* DTBO:4494 */
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+		gpio = <&pm8998_gpios 20 GPIO_ACTIVE_HIGH>;	/* DTBO:4492 */
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam0_dvdd_en>;
+	};
+
+	cam0_avdd: regulator-cam0-avdd {
+		compatible = "regulator-fixed";
+		regulator-name = "cam0_avdd_2v85";		/* DTBO:4494, XA:369 */
+		regulator-min-microvolt = <2850000>;
+		regulator-max-microvolt = <2850000>;
+		gpio = <&pm8998_gpios 15 GPIO_ACTIVE_HIGH>;	/* DTBO:4491 */
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam0_avdd_en>;
+	};
+
+	cam0_avdd2: regulator-cam0-avdd2 {
+		compatible = "regulator-fixed";
+		regulator-name = "cam0_avdd2_1v8";		/* "CAM1_A1V8", DTBO:4510 */
+		regulator-min-microvolt = <1800000>;		/* UNCONFIRMED (name only) */
+		regulator-max-microvolt = <1800000>;
+		gpio = <&pm8998_gpios 19 GPIO_ACTIVE_HIGH>;	/* DTBO:4501 #6 */
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam0_avdd2_en>;
+	};
+
+	cam0_drv: regulator-cam0-drv {
+		compatible = "regulator-fixed";
+		regulator-name = "cam0_ois_drv";		/* "CAM1_DRV", DTBO:4510 */
+		regulator-min-microvolt = <2800000>;		/* UNCONFIRMED (taimen label) */
+		regulator-max-microvolt = <2800000>;
+		gpio = <&pm8998_gpios 9 GPIO_ACTIVE_HIGH>;	/* DTBO:4501 #7 */
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam0_drv_en>;
+	};
+
+	cam0_vaf: regulator-cam0-vaf {
+		compatible = "regulator-fixed";
+		regulator-name = "cam0_vaf";			/* "CAM1_VAF", DTBO:4510 */
+		regulator-min-microvolt = <2850000>;		/* UNCONFIRMED (taimen label) */
+		regulator-max-microvolt = <2850000>;
+		gpio = <&pm8998_gpios 10 GPIO_ACTIVE_HIGH>;	/* DTBO:4501 #5 */
+		enable-active-high;
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam0_vaf_en>;
+	};
+};
+
+&pm8998_gpios {
+	/* WALLEYE DIFFERENCE: vin-sel 1 (DTBO:4605 gpio@d300; XA:504).
+	 * taimen uses 0 (TCAM:313, TDTS:1081). */
+	cam0_dvdd_en: cam0-dvdd-en-state {
+		pins = "gpio20";
+		function = "normal";
+		bias-disable;
+		drive-push-pull;
+		output-low;
+		power-source = <1>;	/* walleye DTBO vin-sel 1; taimen's 0 changed nothing (tests 39/40) */
+		qcom,drive-strength = <1>;	/* UNCONFIRMED: copied from TDTS */
+	};
+
+	cam0_avdd_en: cam0-avdd-en-state {	/* DTBO:4582-4589, vin-sel 0 */
+		pins = "gpio15";
+		function = "normal";
+		bias-disable;
+		drive-push-pull;
+		output-low;
+		power-source = <0>;
+		qcom,drive-strength = <1>;
+	};
+
+	cam0_avdd2_en: cam0-avdd2-en-state {	/* DTBO:4592-4599, vin-sel 0 */
+		pins = "gpio19";
+		function = "normal";
+		bias-disable;
+		drive-push-pull;
+		output-low;
+		power-source = <0>;
+		qcom,drive-strength = <1>;
+	};
+
+	cam0_drv_en: cam0-drv-en-state {	/* DTBO:4562-4569, vin-sel 0 */
+		pins = "gpio9";
+		function = "normal";
+		bias-disable;
+		drive-push-pull;
+		output-low;
+		power-source = <0>;
+		qcom,drive-strength = <1>;
+	};
+
+	cam0_vaf_en: cam0-vaf-en-state {	/* DTBO:4572-4579, vin-sel 0 */
+		pins = "gpio10";
+		function = "normal";
+		bias-disable;
+		drive-push-pull;
+		output-low;
+		power-source = <0>;
+		qcom,drive-strength = <1>;
+	};
+};
+
+&camss {
+	ports {
+		/* CSIPHY0/CSID0 (DTBO:4483-4484), 4 lanes (camera_config.xml:103) */
+		port@0 {
+			reg = <0>;
+			camss_ep_rear: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1 2 3>;
+				remote-endpoint = <&imx362_ep>;
+			};
+		};
+	};
+};
+
+&cci_i2c0 {
+	/* VEND libmmcamera_imx362.so @0x1080: 0x34 -> 0x1a */
+	imx362: camera@1a {
+		compatible = "sony,imx362";
+		reg = <0x1a>;
+
+		orientation = <1>;
+		/*
+		 * UNCONFIRMED. Vendor mount angle 90 (DTBO:4485,
+		 * camera_config.xml:100) vs 270 on taimen (TCAM:155), where
+		 * mainline uses 90 (TDTS:1168-1169). Rotated 180 deg -> 270.
+		 */
+		rotation = <270>;
+
+		clocks = <&mmcc CAMSS_MCLK0_CLK>;
+		power-domains = <&mmcc CAMSS_TOP_GDSC>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&cam_mclk0_default>;
+
+		reset-gpios = <&tlmm 24 GPIO_ACTIVE_LOW>;	/* DTBO:4501 #2 */
+
+		vdrv-supply = <&cam0_drv>;
+		vaf-supply = <&cam0_vaf>;
+		vdig-supply = <&cam0_dvdd>;
+		vio-supply = <&vreg_lvs1a_1p8>;			/* DTBO:4490 */
+		vana-supply = <&cam0_avdd>;
+		vana2-supply = <&cam0_avdd2>;
+
+		port {
+			imx362_ep: endpoint {
+				clock-lanes = <7>;
+				data-lanes = <0 1 2 3>;
+				/* op_pixel_clk 548 MHz (VEND @0xa9498) * 10 / 8 */
+				link-frequencies = /bits/ 64 <685000000>;
+				remote-endpoint = <&camss_ep_rear>;
+			};
+		};
+	};
+};
+
+/*
+ * Camera M6 (part): AF actuator + OIS on the rear CCI bus (docs/camera-walleye.md).
+ * Both answer without MCLK, so they also show whether CCI0 + the rear rails work.
+ */
+&cci_i2c0 {
+	/* VEND libactuator_lc898214xd.so @0x48c: 0xE4 -> 0x72 */
+	af_lens: lens@72 {
+		compatible = "onnn,lc898214xd";
+		reg = <0x72>;
+	};
+
+	/* VEND libois_lc898123f40.so @0x43c: 0x7C -> 0x3e. Also holds the
+	 * rear calibration (VEND libmmcamera_sony_imx362_eeprom.so @0x3a78). */
+	ois@3e {
+		compatible = "onnn,lc898123f40";
+		reg = <0x3e>;
+		vdd-supply = <&vreg_lvs1a_1p8>;
+		vdrv-supply = <&cam0_drv>;
+	};
+};
+
+&imx362 {
+	lens-focus = <&af_lens>;
+};
+
+/*
+ * Rear rails stay on: with them switched by the imx362 driver the sensor never
+ * answers its chip-ID read (-110, tests 39/40); with them on from boot it
+ * probes, the OIS answers (firmware 0x19) and frames stream (test 41).
+ * Unknown which rail/timing the module needs (taimen's driver comment says the
+ * OIS only answers once the IMX362 rails are up). Follow-up: find it and let
+ * the driver switch them again (idle power).
+ */
+&cam0_dvdd { regulator-always-on; regulator-boot-on; };
+&cam0_avdd { regulator-always-on; regulator-boot-on; };
+&cam0_avdd2 { regulator-always-on; regulator-boot-on; };
+&cam0_drv { regulator-always-on; regulator-boot-on; };
+&cam0_vaf { regulator-always-on; regulator-boot-on; };

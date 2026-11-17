@@ -185,3 +185,9 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   1. `bcm15602_easel` → PCIe link up, Easel enumerates as 8086:3140, BARs 4K / 8M / 4M (same as taimen).
   2. `easel_mipi` → bypass RX1→TX1 (front) and RX0→TX0 (rear, 1368 Mbps/lane) configured, mux readbacks match.
   3. `imx179` → libcamera lists "Internal front camera"; `cam -c 1` streams 1640x1232 RGB888 at 15.0 fps via the soft-ISP. Picture is real (ceiling light + structures) but dark: AE not yet checked in a lit scene.
+- 🎉 **P8.5 tests 39-41: rear camera (IMX362) streams on walleye.**
+  - Test 39/40: rails switched by the driver → `imx362: no answer at 0x1a reading chip ID: -110` (GPIO20 power-source 1 or 0: same).
+  - Test 41: rear rails always on → OIS `lc898123f40: firmware 0x19, stabilisation on`, AF lc898214xd bound, imx362 probes. CAMSS links appear only once every sensor in its ports is bound (blacklisting imx179 left the rear unlinked: "No sensor found").
+  - Both cameras listed by libcamera; rear streams 4024x3032 RGB888 at 15 fps (frame black: lens faces the desk).
+  - Side finding: `reboot bootloader` twice came back as a normal boot (after test 38; then from the flashed kernel); `systemctl reboot --reboot-argument=bootloader` worked every time since. Not understood yet.
+  - Kernel WARN at boot: `pclk0_clk_src: rcg didn't update its configuration` (panel module load); display works.
