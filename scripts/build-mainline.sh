@@ -5,7 +5,7 @@
 #
 # Sources: external/linux-mainline (kernel.org v7.2.2) + Porthole's patch
 # series (external/porthole-pmaports, applied in APKBUILD order) + ours in
-# kernel/mainline/ (first-boot DTS, config fragment). The patched tree is an
+# kernel/mainline/ (DTS, config fragment, patches/*.patch applied last). The patched tree is an
 # APFS clone in build/mainline/src, so the submodule stays pristine.
 # Toolchain: clang 18 (LLVM=-18) in docker/mainline, like Porthole's LLVM=1.
 #
@@ -23,7 +23,10 @@ if [ ! -f /.dockerenv ]; then
         git submodule update --init external/linux-mainline external/porthole-pmaports
     fi
     want="$(cat "$PKG/APKBUILD" "$PKG"/*.patch | shasum -a 256 | cut -c1-16) $(git -C external/linux-mainline rev-parse HEAD)"
-    if [ "$(cat build/mainline/src/.porthole 2>/dev/null)" != "$want" ]; then
+    ours="$(cat kernel/mainline/patches/*.patch 2>/dev/null | shasum -a 256 | cut -c1-16)"
+    have_ours="$(cat build/mainline/src/.ours 2>/dev/null || true)"
+    if [ "$(cat build/mainline/src/.porthole 2>/dev/null)" != "$want" ] \
+        || { [ -n "$have_ours" ] && [ "$have_ours" != "$ours" ]; }; then
         echo "Copying the kernel tree to build/mainline/src"
         rm -rf build/mainline/src build/mainline/out
         mkdir -p build/mainline
@@ -31,6 +34,13 @@ if [ ! -f /.dockerenv ]; then
         rm -f build/mainline/src/.git
         scripts/dev.sh /work/scripts/build-mainline.sh patch
         echo "$want" > build/mainline/src/.porthole
+        have_ours=""
+    fi
+    # Our own patches (kernel/mainline/patches) go on top. Applied in place when
+    # the tree has none yet, so adding the first one doesn't force a full rebuild.
+    if [ -z "$have_ours" ]; then
+        scripts/dev.sh /work/scripts/build-mainline.sh ours
+        echo "$ours" > build/mainline/src/.ours
     fi
     exec scripts/dev.sh /work/scripts/build-mainline.sh build
 fi
@@ -47,6 +57,14 @@ if [ "${1:-}" = patch ]; then
         n=$((n + 1))
     done
     echo "applied $n Porthole patches"
+    exit 0
+fi
+if [ "${1:-}" = ours ]; then
+    for f in /work/kernel/mainline/patches/*.patch; do
+        [ -e "$f" ] || continue
+        patch -d "$SRC" -p1 -s --no-backup-if-mismatch -i "$f" || { echo "FAILED: $f"; exit 1; }
+        echo "applied $(basename "$f")"
+    done
     exit 0
 fi
 

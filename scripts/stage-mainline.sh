@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
-# Dev helper (P8.3 wifi): put the mainline wifi/modem pieces on the running
-# phone (downstream Ubuntu is fine; nothing here runs on kernel 4.4).
+# Dev helper (P8.3): put everything the mainline kernel needs on the running
+# phone's rootfs (downstream Ubuntu is fine; nothing here runs on kernel 4.4),
+# then test with `fastboot boot build/mainline/boot-mainline.img`.
 #
-#   PIXEL2_HOST=<ip> scripts/stage-mainline-wifi.sh
+#   PIXEL2_HOST=<ip> scripts/stage-mainline.sh
+#
+# Modules: build/mainline/modules-install (scripts/build-mainline.sh).
 #
 # Firmware is built on the phone from its own partitions (never committed):
 #   /lib/firmware/qcom/msm8998/wahoo/  mba.mbn, modem.mbn (squashed), modemr.jsn,
@@ -20,6 +23,12 @@ for f in build/modem-tools/pil-squasher build/modem-tools/diag-router $FW/board-
 done
 
 scripts/push-overlay.sh
+# Drop-ins removed from the overlay since (push-overlay only adds files).
+scripts/ssh.sh 'sudo rm -rf /etc/systemd/system/pixel2-charge-limit.service.d /etc/systemd/system/pixel2-status-led.service.d && sudo systemctl daemon-reload'
+
+KREL=$(ls build/mainline/modules-install/lib/modules)
+COPYFILE_DISABLE=1 tar --no-xattrs -cf - -C build/mainline/modules-install/lib/modules "$KREL" \
+    | scripts/ssh.sh "sudo rm -rf /lib/modules/$KREL && sudo tar -C /lib/modules --no-same-owner -xf - && sudo depmod $KREL && echo modules $KREL installed"
 
 STAGE=$(mktemp -d); trap 'rm -rf "$STAGE"' EXIT
 cp build/modem-tools/pil-squasher build/modem-tools/diag-router $FW/board-2.bin $FW/firmware-5.bin "$STAGE/"
@@ -35,8 +44,8 @@ chmod 644 \$W/*.mbn
 install -m 644 \$T/board-2.bin \$T/firmware-5.bin \$A/
 install -m 755 \$T/diag-router /usr/local/sbin/diag-router
 rm -rf \$T
-DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rmtfs tqftpserv qrtr-tools >/dev/null
+DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rmtfs tqftpserv qrtr-tools libqmi-utils >/dev/null
 systemctl daemon-reload
-systemctl enable -q diag-router.service rmtfs.service tqftpserv.service
+systemctl enable -q diag-router.service rmtfs.service tqftpserv.service pixel2-wifi-mac.service
 ls -la \$W \$A
 "'

@@ -1,0 +1,17 @@
+# Mainline kernel only (P8.3.6): wlan0 gets the modem-provisioned MAC
+# (usr/local/sbin/pixel2-wifi-mac). Type=simple: NetworkManager waits only
+# for the "hold" step, not for the modem.
+[Unit]
+Description=Wifi: use the phone's provisioned MAC (mainline)
+ConditionKernelVersion=>=5
+Before=NetworkManager.service
+After=rmtfs.service
+
+[Service]
+Type=simple
+ExecStartPre=/usr/local/sbin/pixel2-wifi-mac hold
+ExecStart=/usr/local/sbin/pixel2-wifi-mac
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

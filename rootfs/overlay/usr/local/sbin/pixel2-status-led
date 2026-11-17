@@ -22,6 +22,43 @@ MIN=${MIN:-3} MAX=${MAX:-20} STEPS=${STEPS:-12}   # duty percent, table length
 STEP_MS=${STEP_MS:-80}                            # per table entry
 PAUSE_HI_MS=${PAUSE_HI_MS:-200} PAUSE_LO_MS=${PAUSE_LO_MS:-500}
 
+# Mainline kernel (leds-qcom-lpg): one multicolor LED "rgb:status"
+# (multi_index blue green red). The pattern trigger's hw_pattern runs the
+# same kind of PMIC LUT pulse; entries are "level ms level 0" pairs, the
+# palindrome makes the LPG play it ping-pong, the first entry's time is the
+# low pause and the middle one's the high pause.
+MC=$L/rgb:status
+if [ -d $MC ]; then
+    case "${1:-start}" in
+    start)
+        max=$(cat $MC/max_brightness)
+        pat=$(awk -v a="$MIN" -v b="$MAX" -v n="$STEPS" -v m="$max" -v s="$STEP_MS" \
+                  -v lo="$PAUSE_LO_MS" -v hi="$PAUSE_HI_MS" 'BEGIN {
+            for (i = 0; i < 2 * n - 1; i++) {
+                k = (i < n) ? i : 2 * n - 2 - i
+                v = int(m * (a + (b - a) * k / (n - 1)) / 100 + 0.5)
+                t = (i == 0) ? lo : ((i == n - 1) ? hi : s)
+                printf "%s%d %d %d 0", (i ? " " : ""), v, t, v }
+        }')
+        echo none > $MC/trigger
+        case $LED in red) i="0 0 $max";; blue) i="$max 0 0";; *) i="0 $max 0";; esac
+        echo "$i" > $MC/multi_intensity
+        echo pattern > $MC/trigger
+        echo -1 > $MC/repeat
+        if echo "$pat" > $MC/hw_pattern 2>/dev/null; then
+            echo "pixel2-status-led: $LED pulsing (hw), $MIN-$MAX %"
+        else
+            echo none > $MC/trigger
+            echo $((max * MAX / 100)) > $MC/brightness
+            echo "pixel2-status-led: hw_pattern refused, $LED steady at $MAX %"
+        fi
+        ;;
+    stop) echo none > $MC/trigger; echo 0 > $MC/brightness ;;
+    *)  echo "usage: $0 [start|stop]" >&2; exit 2 ;;
+    esac
+    exit 0
+fi
+
 case "${1:-start}" in
 start)
     if [ "$(cat $L/$LED/on_off_ms)" != "0 0" ] 2>/dev/null; then

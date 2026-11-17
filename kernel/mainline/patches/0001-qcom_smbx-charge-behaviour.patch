@@ -1,0 +1,91 @@
+From: pixel2 ubuntu port
+Subject: [PATCH] power: supply: qcom_smbx: add charge_behaviour (inhibit-charge)
+
+Stop charging the battery while USB keeps powering the system, via
+CHARGING_ENABLE_CMD. Used for an 80% charge limit on a Pixel 2 that
+lives on a charger (P8.3.6).
+---
+--- a/drivers/power/supply/qcom_smbx.c
++++ b/drivers/power/supply/qcom_smbx.c
+@@ -414,7 +414,46 @@
+ 	POWER_SUPPLY_PROP_HEALTH,
+ 	POWER_SUPPLY_PROP_ONLINE,
+ 	POWER_SUPPLY_PROP_USB_TYPE,
++	POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR,
+ };
++
++/*
++ * charge_behaviour: "inhibit-charge" stops charging the battery while USB
++ * keeps powering the system (unlike input suspend via "status", which runs
++ * the device from the battery). Used for a charge limit on devices that
++ * live on a charger.
++ */
++static int smb_get_charge_behaviour(struct smb_chip *chip, int *val)
++{
++	unsigned int cmd;
++	int rc;
++
++	rc = regmap_read(chip->regmap, chip->base + CHARGING_ENABLE_CMD, &cmd);
++	if (rc < 0)
++		return rc;
++
++	*val = (cmd & CHARGING_ENABLE_CMD_BIT) ?
++		POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO :
++		POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE;
++	return 0;
++}
++
++static int smb_set_charge_behaviour(struct smb_chip *chip, int val)
++{
++	switch (val) {
++	case POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO:
++		return regmap_update_bits(chip->regmap,
++					  chip->base + CHARGING_ENABLE_CMD,
++					  CHARGING_ENABLE_CMD_BIT,
++					  CHARGING_ENABLE_CMD_BIT);
++	case POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE:
++		return regmap_update_bits(chip->regmap,
++					  chip->base + CHARGING_ENABLE_CMD,
++					  CHARGING_ENABLE_CMD_BIT, 0);
++	default:
++		return -EINVAL;
++	}
++}
+ 
+ static int smb_get_prop_usb_online(struct smb_chip *chip, int *val)
+ {
+@@ -742,6 +781,8 @@
+ 		return smb_get_prop_health(chip, &val->intval);
+ 	case POWER_SUPPLY_PROP_USB_TYPE:
+ 		return smb_apsd_get_charger_type(chip, &val->intval);
++	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
++		return smb_get_charge_behaviour(chip, &val->intval);
+ 	default:
+ 		dev_err(chip->dev, "invalid property: %d\n", psp);
+ 		return -EINVAL;
+@@ -760,6 +801,8 @@
+ 					  USBIN_SUSPEND_BIT, !val->intval);
+ 	case POWER_SUPPLY_PROP_CURRENT_MAX:
+ 		return smb_set_current_limit(chip, val->intval);
++	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
++		return smb_set_charge_behaviour(chip, val->intval);
+ 	default:
+ 		dev_err(chip->dev, "No setter for property: %d\n", psp);
+ 		return -EINVAL;
+@@ -772,6 +815,7 @@
+ 	switch (psp) {
+ 	case POWER_SUPPLY_PROP_STATUS:
+ 	case POWER_SUPPLY_PROP_CURRENT_MAX:
++	case POWER_SUPPLY_PROP_CHARGE_BEHAVIOUR:
+ 		return 1;
+ 	default:
+ 		return 0;
+@@ -843,6 +887,8 @@
+ 	.get_property = smb_get_property,
+ 	.set_property = smb_set_property,
+ 	.property_is_writeable = smb_property_is_writable,
++	.charge_behaviours = BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_AUTO) |
++			     BIT(POWER_SUPPLY_CHARGE_BEHAVIOUR_INHIBIT_CHARGE),
+ };
+ 
+ /* Init sequence derived from vendor downstream driver */

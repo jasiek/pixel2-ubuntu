@@ -1,0 +1,40 @@
+#!/bin/sh
+# Mainline only: give wlan0 the phone's real wifi MAC (the one Android and
+# our 4.4 kernel use), so the router hands out the same IP on every kernel.
+# ath10k gets no MAC from the WCN3990 firmware and makes up a random one each
+# boot. The real one is provisioned in the modem: Android's cnss-daemon asks
+# for it over QMI (DMS "get MAC address", device wlan); we do the same.
+#
+#   pixel2-wifi-mac hold   before NetworkManager: keep NM off wlan0
+#   pixel2-wifi-mac        wait for modem + wlan0, set the MAC, hand wlan0 to NM
+HOLD=/run/NetworkManager/conf.d/90-pixel2-wlan0-hold.conf
+
+if [ "${1:-}" = hold ]; then
+    mkdir -p "${HOLD%/*}"
+    printf '[keyfile]\nunmanaged-devices=interface-name:wlan0\n' > "$HOLD"
+    exit 0
+fi
+
+release() {
+    rm -f "$HOLD"
+    for i in $(seq 1 30); do nmcli general reload conf 2>/dev/null && break; sleep 1; done
+}
+trap release EXIT
+
+mac=""
+for i in $(seq 1 90); do
+    [ -z "$mac" ] && mac=$(qmicli -d qrtr://0 --dms-get-mac-address=wlan 2>/dev/null \
+        | grep -o -E '([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}' | head -n1)
+    [ -n "$mac" ] && [ -e /sys/class/net/wlan0 ] && break
+    sleep 2
+done
+if [ -z "$mac" ] || [ ! -e /sys/class/net/wlan0 ]; then
+    echo "pixel2-wifi-mac: no MAC from the modem or no wlan0; keeping the random MAC" >&2
+    exit 0
+fi
+mac=$(echo "$mac" | tr 'A-F' 'a-f')
+if [ "$(cat /sys/class/net/wlan0/address)" != "$mac" ]; then
+    ip link set wlan0 down
+    ip link set wlan0 address "$mac"
+fi
+echo "pixel2-wifi-mac: wlan0 uses the modem-provisioned MAC"

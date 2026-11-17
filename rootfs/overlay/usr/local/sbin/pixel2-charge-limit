@@ -1,18 +1,41 @@
 #!/bin/sh
 # Keep the battery between LOW and HIGH percent when the phone lives on a
 # charger (a Li-ion cell held at 100% ages fast and can swell).
-# Uses the Qualcomm charger's battery/charge_disable switch; the phone keeps
-# running from USB power while charging is disabled.
+# Charging stops but USB keeps powering the phone, on both kernels:
+#   4.4 (downstream): battery/charge_disable (1 = off)
+#   mainline:         <charger>/charge_behaviour (inhibit-charge | auto),
+#                     our qcom_smbx patch (kernel/mainline/patches/0001-*)
+#   pixel2-charge-limit          run the loop
+#   pixel2-charge-limit resume   charging back on (ExecStopPost)
 HIGH=${HIGH:-80}
 LOW=${LOW:-70}
-B=/sys/class/power_supply/battery
+P=/sys/class/power_supply
+
+if [ -e $P/battery/charge_disable ]; then
+    CAP=$P/battery/capacity
+    is_off() { [ "$(cat $P/battery/charge_disable)" = 1 ]; }
+    off()    { echo 1 > $P/battery/charge_disable; }
+    on()     { echo 0 > $P/battery/charge_disable; }
+else
+    CAP=""
+    for d in $P/*; do
+        [ "$(cat "$d/type" 2>/dev/null)" = Battery ] && CAP=$d/capacity
+        [ -e "$d/charge_behaviour" ] && CB=$d/charge_behaviour
+    done
+    [ -n "$CAP" ] && [ -n "${CB:-}" ] || { echo "charge-limit: no battery or charge_behaviour" >&2; exit 1; }
+    is_off() { grep -q '\[inhibit-charge\]' "$CB"; }
+    off()    { echo inhibit-charge > "$CB"; }
+    on()     { echo auto > "$CB"; }
+fi
+
+[ "${1:-}" = resume ] && { on; exit 0; }
+
 while :; do
-    cap=$(cat $B/capacity 2>/dev/null || echo 50)
-    dis=$(cat $B/charge_disable 2>/dev/null || echo 0)
-    if [ "$cap" -ge "$HIGH" ] && [ "$dis" = 0 ]; then
-        echo 1 > $B/charge_disable && echo "charge-limit: ${cap}% >= ${HIGH}%, charging off"
-    elif [ "$cap" -le "$LOW" ] && [ "$dis" = 1 ]; then
-        echo 0 > $B/charge_disable && echo "charge-limit: ${cap}% <= ${LOW}%, charging on"
+    cap=$(cat "$CAP" 2>/dev/null || echo 50)
+    if [ "$cap" -ge "$HIGH" ] && ! is_off; then
+        off && echo "charge-limit: ${cap}% >= ${HIGH}%, charging off"
+    elif [ "$cap" -le "$LOW" ] && is_off; then
+        on && echo "charge-limit: ${cap}% <= ${LOW}%, charging on"
     fi
     sleep 60
 done
