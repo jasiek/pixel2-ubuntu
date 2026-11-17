@@ -59,7 +59,7 @@ echo "built $(date -u +%FT%TZ) kernel $KREL" > "$R/etc/pixel2-build"
 
 rm -f build/rootfs.img build/rootfs.simg
 # Features limited to what kernel 4.4 ext4 supports.
-mkfs.ext4 -q -F -L ubuntu -O ^metadata_csum_seed -E root_owner=0:0 -d "$R" build/rootfs.img "$SIZE"
+mkfs.ext4 -q -F -L ubuntu -O ^metadata_csum_seed -E root_owner=0:0,lazy_itable_init=0,lazy_journal_init=0 -d "$R" build/rootfs.img "$SIZE"
 img2simg build/rootfs.img build/rootfs.simg
 rm -rf "$R"
 ls -la build/rootfs.img build/rootfs.simg
