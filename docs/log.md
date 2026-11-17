@@ -37,3 +37,13 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - B2 (= B without VT/fbcon): no reset, USB gadget enumerated, but macOS created no NCM network interface and the serial port was silent. **Phone hung** (not in fastboot or Android) and needs a manual power-button restart. Unclear whether it is a kernel hang or the serial/network setup.
   - Panics reboot in 1 s (`PANIC_TIMEOUT=1`), but soft/hard lockups and hung tasks are configured not to panic. Debug images now add `softlockup_panic=1 hung_task_panic=1 nmi_watchdog=panic`. The initramfs debug mode returns to fastboot after 10 min unless `/tmp/keep` exists. A serial getty now starts first, in every mode.
   - Pre-built for the next run: `build/boot-{min,B,A}-debug.img` (B = B2 config).
+
+## 2026-11-17
+- Owner restarted the phone (power button); it came back in Android.
+- Bisect results:
+  - min: UP after 22 s.
+  - B2: UP, but the first telnet session closed at once, telnetd died, and serial was silent. ~3 min later `hung_task_panic` rebooted it to Android. Cause: **the B2 fragment lacked `CONFIG_DEVTMPFS=y`**, a bug in the test, not the options. `/dev` had no `ptmx` (telnet) and no `ttyGS0` (serial). Last night's "hang" was the same thing.
+  - Raw reads of `boot_a` (sda9) and `userdata` (sda45) work fine on the min kernel. userdata currently holds Android's ext4 `/data`.
+  - Partition map: userdata = `/dev/sda45`, system_a/b = sda22/sda43, vendor_a/b = sda20/sda41, boot_a/b = sda9/sda30. LUNs sdb–sdf hold xbl, misc, persist, modemst, etc.
+- Conclusion: **only VT/VT_CONSOLE/FRAMEBUFFER_CONSOLE break boot.** Removed from `kernel/walleye-ubuntu.config` and dropped `console=tty0`.
+- Full kernel rebuilt without VT, `boot-debug.img` via `fastboot boot`: UP after 21 s, telnet + serial shells both work, `selinux=0` effective (no /sys/fs/selinux), `/dev/ptmx` + `/dev/ttyGS0` present. **P5.0 done.**

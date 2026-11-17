@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P5.0 (phone is hung in a test image: hold Power ~15 s to restart it, then run the bisect)
+## ▶ RESUME HERE: P5.1
 
 ---
 
@@ -90,13 +90,14 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [x] **P4.4** Write `scripts/make-bootimg.sh`: kernel + initramfs + cmdline/offsets from P2.4 → `build/boot.img`.
 
 ## Phase 5: First boot, tethered (1–3 h; most debugging lands here)
-- [ ] **P5.0** Pre-flash bisect: the full config kernel resets or hangs; the minimal one (`kernel/debug-minimal.config`) reaches the initramfs shell. Find the bad option(s):
+- [x] **P5.0** Pre-flash bisect: the full config kernel resets or hangs; the minimal one (`kernel/debug-minimal.config`) reaches the initramfs shell. Find the bad option(s):
   ```sh
   scripts/try-boot.sh build/boot-min-debug.img   # baseline, expect UP
   scripts/try-boot.sh build/boot-B-debug.img     # +no-paranoid-net, selinux bootparam, ECM (hung once)
   scripts/try-boot.sh build/boot-A-debug.img     # +systemd/cgroup/namespace options
   ```
   - Already known: VT + VT_CONSOLE + FRAMEBUFFER_CONSOLE together reset the phone; drop them from `kernel/walleye-ubuntu.config`.
+  - Result: VT/fbcon was the only culprit (B2's 'hang' was a test bug: no DEVTMPFS). Full kernel without VT boots to the debug shell.
   - Debug images now turn hangs into panics (auto-reboot) and return to fastboot after 10 min, so unattended runs can't get stuck again.
   - When the shell is up: `scripts/initrd-sh.py '<cmd>'` (telnet) or `scripts/serial-sh.py '<cmd>'` (USB serial).
 - [ ] **P5.1** ⚠️ Overwrites Android's data partition: `fastboot flash userdata build/rootfs.simg`
