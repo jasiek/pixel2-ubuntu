@@ -7,8 +7,9 @@
  * clocks, UART, power key). Re-enable one block at a time:
  *  - mdss/gpu: the wahoo dtsi carries taimen's LG panel; walleye has a
  *    Samsung S6E3FA5 (no mainline driver).
- *  - mss/wifi: taimen needed Pixel-specific modem/MSA carveouts; a bad
- *    setup hung boots there. Untested on walleye.
+ *  - mss/wifi: enabled 2026-11-17 (Porthole's wahoo carveouts: 120 MiB mpss,
+ *    fixed MSA). Needs rmtfs, tqftpserv, diag-router + firmware in
+ *    /lib/firmware/qcom/msm8998/wahoo (scripts/stage-mainline-wifi.sh).
  *  - adsp/slpi: not needed headless.
  *  - charger/fg: enabled (2026-11-17); walleye.dts values (4.4 V, 2700 mAh)
  *    match HTC's downstream batterydata-walleye.
@@ -27,10 +28,8 @@
 
 &mdss { status = "disabled"; };
 &adreno_gpu { status = "disabled"; };
-&remoteproc_mss { status = "disabled"; };
 &remoteproc_adsp { status = "disabled"; };
 &remoteproc_slpi { status = "disabled"; };
-&wifi { status = "disabled"; };
 &blsp1_uart3 { status = "disabled"; };
 
 /*

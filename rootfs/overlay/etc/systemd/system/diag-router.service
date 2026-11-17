@@ -1,0 +1,16 @@
+# Mainline kernel only (P8.3 wifi): drains the modem's DIAG QRTR channel.
+# Without it the modem's diag task starves and its watchdog kills the WLAN
+# protection domain every ~19 s (found on taimen by Porthole).
+# Binary: scripts/build-modem-tools.sh (external/qcom-diag).
+[Unit]
+Description=Qualcomm DIAG router (modem diagnostics drain)
+ConditionKernelVersion=>=5
+After=rmtfs.service
+
+[Service]
+ExecStart=/usr/local/sbin/diag-router
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
