@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P7.4 (headless tuning: backlight off, unattended-upgrades, charging)
+## ▶ RESUME HERE: Phase 7 done. Open: verify the charge limit on a charger; then pick the phone's job (Phase 8 is optional)
 
 ---
 
@@ -131,11 +131,11 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [x] **P7.2** _Done 2026-11-17; Start in the bootloader now boots Ubuntu (SSH in ~15 s)._ `fastboot flash boot_a build/boot.img && fastboot flash boot_b build/boot.img`
 - [x] **P7.3** _Done 2026-11-17: cable unplugged, power button → SSH over wifi (pixel2.local) within ~60 s of power-on, slot marked successful, NTP synced._ Power off, then press the power button.
   - Gate: SSH over wifi works without the Mac. 🎉 **Milestone 2: the phone boots into Linux.**
-- [ ] **P7.4** Headless tuning:
+- [x] **P7.4** _Done 2026-11-17 (pixel2-headless, pixel2-charge-limit 70–80%, unattended-upgrades). Charge limit still to verify on a charger._ Headless tuning:
   - Turn the screen backlight off.
   - Enable `unattended-upgrades`.
   - Check charging under `/sys/class/power_supply/`. If it lives on a charger 24/7, look for a charge limit (battery swelling risk).
-- [ ] **P7.5** Reboot 5 times.
+- [x] **P7.5** _Done 2026-11-17: 5/5 reboots over wifi, SSH after ~34 s each, slot stays successful, backlight 0._ Reboot 5 times.
   - Gate: SSH works after every reboot.
 
 ## Phase 8: Optional stretch (decide later)

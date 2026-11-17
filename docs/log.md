@@ -109,3 +109,4 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - `pixel2-headless.service`: lcd-backlight 127 → 0, fb0 blanked (the bootloader leaves the backlight at ~50%).
   - `pixel2-charge-limit.service`: battery between 70 and 80% via `power_supply/battery/charge_disable` (Qualcomm SMB2). ExecStopPost turns charging back on. **Not yet tested on a charger**: the cable was unplugged during setup.
   - unattended-upgrades installed (also in the Dockerfile); APT periodic update + upgrade are on by default.
+- **P7.5 done (2026-11-17).** 5 reboots over wifi (`systemctl reboot`), every one: SSH at ~34 s after the command (uptime 16 s), `running`, boot_b successful, wlan0 has an address, backlight 0. **Phase 7 complete.**
