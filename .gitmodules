@@ -20,3 +20,15 @@
 	ignore = dirty
 	path = external/linux-mainline
 	url = https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+[submodule "external/pil-squasher"]
+	path = external/pil-squasher
+	url = https://github.com/linux-msm/pil-squasher
+	shallow = true
+[submodule "external/qca-swiss-army-knife"]
+	path = external/qca-swiss-army-knife
+	url = https://github.com/qca/qca-swiss-army-knife
+	shallow = true
+[submodule "external/qcom-diag"]
+	path = external/qcom-diag
+	url = https://github.com/linux-msm/diag
+	shallow = true

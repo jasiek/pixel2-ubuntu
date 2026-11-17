@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         lz4 gzip cpio kmod git ca-certificates file \
         python3 device-tree-compiler \
         clang-18 lld-18 llvm-18 \
+        libqrtr-dev libudev-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
