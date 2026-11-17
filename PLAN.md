@@ -158,7 +158,12 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [x] P8.3.3 _Done: `scripts/build-mainline.sh`, docker/mainline (clang 18), 10 min._ Build container with a modern toolchain + `scripts/build-mainline.sh` → Image.gz + walleye DTB (fix panel/touch nodes: drop taimen's; no bootargs).
   - [x] P8.3.4 _Done 2026-11-17: mainline 7.2.2 boots to our initramfs, USB serial works. Needed: `wahoo-dtbo-sink.dtsi` (stock overlay applies into dummy nodes), factory msm-id, no `earlycon`._ `fastboot boot` test with the **stock dtbo** (nothing flashed). Gate: USB serial/network from our initramfs.
   - [x] P8.3.5 _Not needed: the sink DTS avoids flashing dtbo._ Only if P8.3.4 fails on the overlay: crafted stub dtbo, flashed to the **inactive slot only** (owner OK first; current Ubuntu needs the stock dtbo for its panel).
-  - [ ] P8.3.6 Bring-up order: UFS + USB → rootfs boots → charger/LED → wifi (modem carveouts) → display/touch.
+  - [ ] P8.3.6 Bring-up order (each step: `fastboot boot`, nothing flashed):
+    - [x] UFS + USB gadget + rootfs: _Ubuntu 24.04 runs on 7.2.2 (2026-11-17): running, 0 failed, cgroup2, cpufreq present._
+    - [ ] Charger + fuel gauge (battery %, charge limit via mainline `charge_behaviour`/disable) + RGB LED (leds-qcom-lpg).
+    - [ ] Wifi: modem (MSS) + ath10k with the wahoo carveouts; firmware paths for mainline (qcom/msm8998/wahoo/*).
+    - [ ] Display (S6E3FA5 panel driver) + touch (rmi4): console on mainline, and a real VT login.
+    - [ ] Then decide: flash mainline as the default kernel (boot_a/b) or keep it on `fastboot boot`.
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
