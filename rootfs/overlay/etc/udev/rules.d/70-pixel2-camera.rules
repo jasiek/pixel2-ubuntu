@@ -1,0 +1,4 @@
+# libcamera's soft-ISP allocates frame buffers from dma-buf heaps / udmabuf
+# (P8.5). Root-only by default; let the video group (user ubuntu) use them.
+SUBSYSTEM=="dma_heap", GROUP="video", MODE="0660"
+KERNEL=="udmabuf", GROUP="video", MODE="0660"
