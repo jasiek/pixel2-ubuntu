@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P6.5 (wifi password in $WIFI_PASS does not match the AP; check it, then retry)
+## ▶ RESUME HERE: P7.3 (unplug USB, power off, press power; expect SSH over wifi)
 
 ---
 
@@ -123,7 +123,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   4. `scripts/try-boot.sh build/boot.img 180`. If there's no USB network, use `scripts/serial-sh.py`.
   5. Find out why the last `boot.img` boot never brought up USB serial; pstore was lost to the Android boot.
   6. Then do Phase 7 soon: with our boot.img flashed, a failed boot can't drop into Android and wipe userdata again.
-- [ ] **P6.5** Connect: `sudo nmcli dev wifi connect "<SSID>" password "<pw>"`.
+- [x] **P6.5** _Done 2026-11-17: profile `home`, autoconnect on; SSH over wifi + pixel2.local work._ Connect: `sudo nmcli dev wifi connect "<SSID>" password "<pw>"`.
   - Gate: `ssh ubuntu@pixel2.local` works with the USB cable unplugged.
 
 ## Phase 7: Make it permanent (1 h)
