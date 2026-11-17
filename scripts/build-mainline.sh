@@ -54,7 +54,7 @@ MAKE=(make -C "$SRC" O="$OUT" ARCH=arm64 LLVM=-18 -j"$(nproc)"
       KBUILD_BUILD_USER=pixel2 KBUILD_BUILD_HOST=ubuntu-port)
 
 # Our first-boot DTS next to Porthole's walleye.dts.
-cp /work/kernel/mainline/$DTS.dts "$SRC/arch/arm64/boot/dts/qcom/"
+cp /work/kernel/mainline/$DTS.dts /work/kernel/mainline/wahoo-dtbo-sink.dtsi "$SRC/arch/arm64/boot/dts/qcom/"
 grep -q "$DTS.dtb" "$SRC/arch/arm64/boot/dts/qcom/Makefile" \
     || echo "dtb-\$(CONFIG_ARCH_QCOM) += $DTS.dtb" >> "$SRC/arch/arm64/boot/dts/qcom/Makefile"
 

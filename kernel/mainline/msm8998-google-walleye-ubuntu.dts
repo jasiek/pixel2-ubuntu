@@ -15,6 +15,7 @@
  */
 
 #include "msm8998-google-walleye.dts"
+#include "wahoo-dtbo-sink.dtsi"
 
 / {
 	model = "Google Pixel 2 (Ubuntu, mainline first boot)";
