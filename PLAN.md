@@ -166,6 +166,12 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [ ] Display (S6E3FA5 panel driver) + touch (rmi4): console on mainline, and a real VT login.
     - [ ] Then decide: flash mainline as the default kernel (boot_a/b) or keep it on `fastboot boot`.
 
+- [ ] **P8.5** Camera: take pictures and record video (owner request 2026-11-17).
+  - Downstream 4.4 is a dead end: its camera stack (msm camera v2) only works with Android's proprietary camera HAL.
+  - Path: mainline (P8.3) CAMSS (Porthole carries msm8998 CAMSS patches) + sensor drivers + libcamera (`cam` / `libcamera-still`-style CLI, GStreamer `libcamerasrc` for video).
+  - First steps: identify walleye's sensors from the downstream DT (rear/front sensor models, CSI ports, I2C addresses, regulators, MCLK); check mainline/Porthole drivers for them; check Porthole's taimen camera status.
+  - Gate: a photo (JPEG) and a short video (MP4) taken from the shell, copied to the Mac.
+
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
 - [x] **P9.1** _Done 2026-11-17: fresh clone → both images, no manual steps, 11.5 min (kernel 6.5 min); rerun = all steps "up to date"; plus `scripts/get-firmware.sh`._ `scripts/build-all.sh`: one entry point that runs, in order and only when outdated:
