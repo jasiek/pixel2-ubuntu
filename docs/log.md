@@ -105,3 +105,7 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - GPT head+tail of sda..sdf backed up first to firmware/backup/gpt/ (gitignored).
 - 🎉 **Milestone 2: the phone boots into Linux on its own (2026-11-17).** Cable unplugged, poweroff over wifi, owner pressed Power: SSH over wifi via `pixel2.local` at uptime ~60 s. System running, usb0 NO-CARRIER (no cable), wlan0 192.168.104.44, boot_b marked successful, NTP synced. P7.3 done.
   - Note: `systemctl poweroff` with the cable plugged in doesn't stay off. The bootloader starts charger mode (`androidboot.mode=charger`) with our boot.img, which boots full Ubuntu. Handy for a headless device on a charger; for a real power-off, unplug first.
+- **P7.4 headless tuning (2026-11-17).**
+  - `pixel2-headless.service`: lcd-backlight 127 → 0, fb0 blanked (the bootloader leaves the backlight at ~50%).
+  - `pixel2-charge-limit.service`: battery between 70 and 80% via `power_supply/battery/charge_disable` (Qualcomm SMB2). ExecStopPost turns charging back on. **Not yet tested on a charger**: the cable was unplugged during setup.
+  - unattended-upgrades installed (also in the Dockerfile); APT periodic update + upgrade are on by default.
