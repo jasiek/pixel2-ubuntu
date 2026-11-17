@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P5.1
+## ▶ RESUME HERE: P5.2
 
 ---
 
@@ -100,7 +100,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Result: VT/fbcon was the only culprit (B2's 'hang' was a test bug: no DEVTMPFS). Full kernel without VT boots to the debug shell.
   - Debug images now turn hangs into panics (auto-reboot) and return to fastboot after 10 min, so unattended runs can't get stuck again.
   - When the shell is up: `scripts/initrd-sh.py '<cmd>'` (telnet) or `scripts/serial-sh.py '<cmd>'` (USB serial).
-- [ ] **P5.1** ⚠️ Overwrites Android's data partition: `fastboot flash userdata build/rootfs.simg`
+- [x] **P5.1** ⚠️ Overwrites Android's data partition: `fastboot flash userdata build/rootfs.simg`
 - [ ] **P5.2** `fastboot boot build/boot.img`
 - [ ] **P5.3** On the Mac, a new USB network interface appears (check `ifconfig`). Give it `172.16.42.2/24`, then `ssh ubuntu@172.16.42.1`.
   - Gate: you get a shell. 🎉 **Milestone 1: Ubuntu 24.04 is running on the Pixel 2.**

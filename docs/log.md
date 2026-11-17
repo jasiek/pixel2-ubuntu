@@ -47,3 +47,4 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - Partition map: userdata = `/dev/sda45`, system_a/b = sda22/sda43, vendor_a/b = sda20/sda41, boot_a/b = sda9/sda30. LUNs sdb–sdf hold xbl, misc, persist, modemst, etc.
 - Conclusion: **only VT/VT_CONSOLE/FRAMEBUFFER_CONSOLE break boot.** Removed from `kernel/walleye-ubuntu.config` and dropped `console=tty0`.
 - Full kernel rebuilt without VT, `boot-debug.img` via `fastboot boot`: UP after 21 s, telnet + serial shells both work, `selinux=0` effective (no /sys/fs/selinux), `/dev/ptmx` + `/dev/ttyGS0` present. **P5.0 done.**
+- P5.1: `fastboot flash userdata build/rootfs.simg` (sparse, 229 MB, one chunk; max-download-size 512 MiB) OKAY. Verified from the debug shell: sda45 mounts, build stamp 06:43Z, /sbin/init -> systemd, 3.9G fs (not grown yet).
