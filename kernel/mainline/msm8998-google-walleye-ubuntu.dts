@@ -18,6 +18,8 @@
 
 / {
 	model = "Google Pixel 2 (Ubuntu, mainline first boot)";
+	/* Same as the factory DTB (MSM8998 v2.1); msm8998.dtsi has <0x124 0x0>. */
+	qcom,msm-id = <0x124 0x20001>;
 };
 
 &mdss { status = "disabled"; };
