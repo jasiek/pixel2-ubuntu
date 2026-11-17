@@ -4,7 +4,8 @@
 #   scripts/try-boot.sh build/boot-debug.img [timeout_s]
 #
 # Gets the phone into fastboot from wherever it is (Android via adb, our
-# initramfs via telnet, Ubuntu via ssh), runs `fastboot boot`, then waits for
+# initramfs via telnet, Ubuntu via ssh, either via USB serial), runs
+# `fastboot boot`, then waits for
 # 172.16.42.1 to answer. Exit 0 = up, 1 = Android came back, 2 = timeout.
 # Nothing is flashed.
 set -uo pipefail
@@ -22,12 +23,13 @@ to_fastboot() {
     in_fastboot && return 0
     if in_android; then
         adb reboot bootloader
-    elif ours_up; then
-        if nc -z -G 2 "$PHONE" 22 2>/dev/null; then
-            "${SSH[@]}" ubuntu@$PHONE 'sudo systemctl reboot --reboot-argument=bootloader' || true
-        else
-            scripts/initrd-sh.py 'reboot-bootloader || echo b > /proc/sysrq-trigger' >/dev/null 2>&1 || true
-        fi
+    elif ours_up && nc -z -G 2 "$PHONE" 22 2>/dev/null; then
+        "${SSH[@]}" ubuntu@$PHONE 'sudo systemctl reboot --reboot-argument=bootloader' || true
+    elif ours_up && nc -z -G 2 "$PHONE" 23 2>/dev/null; then
+        scripts/initrd-sh.py 'reboot-bootloader || echo b > /proc/sysrq-trigger' >/dev/null 2>&1 || true
+    elif ls /dev/cu.usbmodempixel2* >/dev/null 2>&1; then
+        # Ubuntu (autologin user with sudo) or the initramfs serial shell.
+        TIMEOUT=10 scripts/serial-sh.py 'sudo -n systemctl reboot --reboot-argument=bootloader 2>/dev/null || reboot-bootloader' >/dev/null 2>&1 || true
     else
         echo "phone not reachable (adb/fastboot/usb net). Hold Vol-Down + Power."
     fi
