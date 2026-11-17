@@ -15,6 +15,10 @@ echo "Google"              > $G/strings/0x409/manufacturer
 echo "Pixel 2 (Ubuntu)"    > $G/strings/0x409/product
 echo "pixel2-ubuntu"       > $G/strings/0x409/serialnumber
 mkdir -p $G/functions/ncm.usb0 $G/functions/acm.GS0
+# Fixed MACs (locally administered): otherwise each bind picks random ones and
+# the Mac treats the phone as a brand-new network interface every boot.
+echo 02:50:49:58:32:01 > $G/functions/ncm.usb0/dev_addr    # phone
+echo 02:50:49:58:32:02 > $G/functions/ncm.usb0/host_addr   # Mac
 mkdir -p $G/configs/c.1/strings/0x409
 echo "NCM + ACM" > $G/configs/c.1/strings/0x409/configuration
 [ -e $G/configs/c.1/ncm.usb0 ] || ln -s $G/functions/ncm.usb0 $G/configs/c.1/
