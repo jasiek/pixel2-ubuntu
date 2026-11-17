@@ -77,4 +77,4 @@ if [ "${STOCK:-0}" != 1 ]; then
     find "$OUT/modules-install" -name "*.ko" | sed "s|$OUT/modules-install/||"
 fi
 ls -la "$OUT/arch/arm64/boot/Image.lz4-dtb"
-strings "$OUT/vmlinux" | grep -m1 "^Linux version"
+strings "$OUT/vmlinux" | grep -m1 "^Linux version" || true  # -m1 closes the pipe early (SIGPIPE)
