@@ -48,3 +48,10 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
 - Conclusion: **only VT/VT_CONSOLE/FRAMEBUFFER_CONSOLE break boot.** Removed from `kernel/walleye-ubuntu.config` and dropped `console=tty0`.
 - Full kernel rebuilt without VT, `boot-debug.img` via `fastboot boot`: UP after 21 s, telnet + serial shells both work, `selinux=0` effective (no /sys/fs/selinux), `/dev/ptmx` + `/dev/ttyGS0` present. **P5.0 done.**
 - P5.1: `fastboot flash userdata build/rootfs.simg` (sparse, 229 MB, one chunk; max-download-size 512 MiB) OKAY. Verified from the debug shell: sda45 mounts, build stamp 06:43Z, /sbin/init -> systemd, 3.9G fs (not grown yet).
+- P5.2 first real boot (`fastboot boot build/boot.img`): **Ubuntu 24.04.5 + systemd 255 runs on kernel 4.4.223.** Serial autologin on ttyGS0 works (`/dev/cu.usbmodempixel2_ubuntu3`). State `degraded`, no USB network. Problems and fixes:
+  1. `usb0` unmanaged: NM's `85-nm-unmanaged.rules` sets NM_UNMANAGED=1 for DEVTYPE=gadget. Fix: `/etc/udev/rules.d/86-pixel2-usb-gadget-nm.rules`.
+  2. ssh: "no hostkeys available". Ubuntu's `ExecStartPre=sshd -t` runs before our `ssh-keygen -A`. Fix: reset the ExecStartPre list in the drop-in.
+  3. Modules: "htc_battery: disagrees about version of symbol module_layout". The CRCs are identical on disk, but this 4.4 tree stores `__kcrctab = &__crc_sym` (an address), and KASLR (RANDOMIZE_BASE=y) relocates it. Fix: `# CONFIG_MODVERSIONS is not set`.
+  4. growfs failed: "There are errors in the filesystem". The ext4 error is `ext4_has_uninit_itable: Inode table for bg 0 marked as needing zeroing`, because mke2fs lazy itable init leaves bg 0 without INODE_ZEROED. Fix: `mkfs -E lazy_itable_init=0,lazy_journal_init=0`. Checked first: img2simg encodes zeros as FILL chunks (19 RAW + 19 FILL, no DONT_CARE), so the flashed itables really are zero.
+  5. PIDs at 1.9 M after 6 min: the initramfs getty loop survived switch_root and spun because its binaries were gone. Fix: kill it before switch_root.
+  - Clock starts at 2026-10-12 (systemd build-time floor; no RTC sync yet). timesyncd should fix it once networking works.
