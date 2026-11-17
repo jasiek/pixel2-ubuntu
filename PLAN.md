@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: mainline 7.2.2 is the flashed kernel (boot_b). Next: wifi follow-ups (IPA/rmnet parked with P8.2), P8.5 camera. Waiting: P9.2 gate. Also open: pick the phone's job
+## ▶ RESUME HERE: P8.5 camera (mainline 7.2.2 is the flashed kernel, boot_b). Waiting: P9.2 gate (someone else flashes a phone). Waiting: P9.2 gate. Also open: pick the phone's job
 
 ---
 
@@ -190,5 +190,6 @@ Goal: on a fresh clone, one script builds everything and then walks the user thr
   3. Flash vbmeta_a/b (verification off), boot_a/b, userdata; handle the bootloader going quiet on USB after the userdata write (tell the user to pick **Start**).
   4. Wait for the phone on USB/wifi, print the SSH command, check the LED pulse + screen off by asking the user.
   - Also a restore path: back to stock Android (`flash-all.sh`, vbmeta with verification).
+  - _2026-11-17: flashes mainline to the active slot and 4.4 to the other (KERNEL=4.4 for 4.4 on both). A mainline-only install never records the real wifi MAC (that needs 4.4), so pixel2-wifi-mac makes up one stable locally administered MAC on first boot._
   - Gate: someone else flashes a phone using only README + `scripts/flash.sh`.
 - [x] **P9.3** _Done 2026-11-17._ README: replace the dev-notes flow with "build-all → flash", and keep PLAN.md/log.md as the history.

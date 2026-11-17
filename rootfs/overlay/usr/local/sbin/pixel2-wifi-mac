@@ -29,7 +29,6 @@ record)
     echo "pixel2-wifi-mac: recorded wlan0's MAC for mainline"
     exit 0 ;;
 hold)
-    [ -s "$SAVED" ] || exit 0
     mkdir -p "${HOLD%/*}"
     printf '[keyfile]\nunmanaged-devices=interface-name:wlan0\n' > "$HOLD"
     exit 0 ;;
@@ -46,8 +45,13 @@ trap release EXIT
 
 mac=$(cat "$SAVED" 2>/dev/null)
 if ! echo "$mac" | grep -q -E "$MACRE"; then
-    echo "pixel2-wifi-mac: nothing recorded yet (boot 4.4 once); keeping the random MAC"
-    exit 0
+    # Never booted 4.4 (fresh mainline install): make up one locally
+    # administered MAC and keep it, so DHCP gives the same IP every boot.
+    # A later 4.4 boot replaces it with the real one (record).
+    mac=02; for b in $(od -An -N5 -tx1 /dev/urandom); do mac=$mac:$b; done
+    mkdir -p "${SAVED%/*}"
+    ( umask 077; echo "$mac" > "$SAVED" )
+    echo "pixel2-wifi-mac: no real MAC recorded; generated a stable one"
 fi
 wait_wlan0 || { echo "pixel2-wifi-mac: no wlan0" >&2; exit 0; }
 if [ "$(cat /sys/class/net/wlan0/address)" != "$mac" ]; then

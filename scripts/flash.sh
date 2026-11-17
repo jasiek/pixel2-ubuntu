@@ -5,6 +5,9 @@
 #   scripts/flash.sh restore   # back to stock Android 11 (erases the phone)
 #
 # One step at a time; each step checks the phone's state before going on.
+# Kernels: the active slot gets mainline 7.2.2 (build/mainline/boot-mainline.img),
+# the other slot keeps 4.4 (build/boot.img) as a fallback.
+# KERNEL=4.4 scripts/flash.sh puts 4.4 on both slots.
 # Needs build/boot.img + build/rootfs.simg (scripts/build-all.sh) and
 # firmware/ (scripts/get-firmware.sh). Nothing is written to the phone before
 # you type "yes" in step 3.
@@ -90,8 +93,12 @@ if [ "${1:-}" = restore ]; then
     exit 0
 fi
 
-for f in build/boot.img build/rootfs.simg; do
-    [ -f "$f" ] || die "Missing $f. Run scripts/build-all.sh first."
+KERNEL=${KERNEL:-mainline}
+ML=build/mainline/boot-mainline.img
+need=(build/boot.img build/rootfs.simg)
+[ "$KERNEL" = 4.4 ] || need+=("$ML")
+for f in "${need[@]}"; do
+    [ -f "$f" ] || die "Missing $f. Run scripts/build-all.sh first (or KERNEL=4.4 scripts/flash.sh)."
 done
 [ -f firmware/vbmeta.img ] || scripts/get-firmware.sh
 
@@ -118,9 +125,17 @@ else
 fi
 
 say 3 "Confirm"
+slot=$(getvar current-slot)
+case "$slot" in a) other=b ;; b) other=a ;; *) die "Unknown active slot '$slot'." ;; esac
+if [ "$KERNEL" = 4.4 ]; then
+    BOOT_ACTIVE=build/boot.img
+else
+    BOOT_ACTIVE=$ML
+fi
 echo "About to write:"
 echo "  vbmeta_a, vbmeta_b  firmware/vbmeta.img with verification turned off"
-echo "  boot_a, boot_b      build/boot.img (kernel + initramfs)"
+echo "  boot_$slot (active)   $BOOT_ACTIVE"
+echo "  boot_$other            build/boot.img (kernel 4.4, fallback)"
 echo "  userdata            build/rootfs.simg (Ubuntu 24.04)"
 printf '\033[31mThis ERASES all data on the phone (userdata).\033[0m Android stays installed but won'"'"'t start.\n'
 echo "Undo later with: scripts/flash.sh restore"
@@ -130,12 +145,11 @@ read -r -p 'Type "yes" to flash: ' a
 say 4 "Flash"
 fastboot --disable-verity --disable-verification flash vbmeta_a firmware/vbmeta.img
 fastboot --disable-verity --disable-verification flash vbmeta_b firmware/vbmeta.img
-fastboot flash boot_a build/boot.img
-fastboot flash boot_b build/boot.img
+fastboot flash "boot_$slot" "$BOOT_ACTIVE"
+fastboot flash "boot_$other" build/boot.img
 # Reset the retry counter of the active slot (an earlier failed boot may have
 # marked it unbootable); Ubuntu marks it successful once it's up (qbootctl).
-slot=$(getvar current-slot)
-[ -n "$slot" ] && fastboot set_active "$slot"
+fastboot set_active "$slot"
 # userdata last: after this write the bootloader stops answering on USB.
 fastboot flash userdata build/rootfs.simg || true
 ok "written"
@@ -163,4 +177,6 @@ ok "Ubuntu is up at $up"
 echo "  Log in: ssh -i $KEY ubuntu@$up   (or scripts/ssh.sh)"
 ask "Is the green LED pulsing slowly?" && ok "status LED" || warn "LED: see PLAN.md P8.4"
 ask "Is the screen dark, and does touching it show a text console?" && ok "screen" || warn "screen: see PLAN.md P8.1"
+echo "Kernel 4.4 instead, any time: Volume Down + Power for the bootloader, then"
+echo "  fastboot flash boot_$slot build/boot.img"
 echo "Done."
