@@ -39,6 +39,7 @@ ismnt /persist || mount -t overlay overlay \
 
 # Dirs the daemons expect on Android's /data.
 for d in modem lpass slpi tn; do mkdir -p "/data/vendor/tombstones/rfs/$d"; done
+mkdir -p /data/vendor/wifi            # cnss-daemon: wlfw_cal_*.bin
 
 /usr/local/sbin/android-props
 

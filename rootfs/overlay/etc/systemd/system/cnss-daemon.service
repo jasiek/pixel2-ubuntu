@@ -1,0 +1,18 @@
+# Qualcomm WLAN helper: downloads the board data file (bdwlan.*) to the WLAN
+# firmware and sends it the MAC address. The firmware only reports
+# "FW ready" (and wlan.ko only probes, creating wlan0) after this.
+# libperipheral_client.so is our stub (android/stubs/): the real one needs
+# Android's binder service manager; modem.service holds the modem up instead.
+[Unit]
+Description=Android cnss-daemon (WLAN board data + MAC to firmware)
+Requires=modem.service
+After=modem.service
+
+[Service]
+Environment=LD_LIBRARY_PATH=/usr/local/lib/pixel2/android:/vendor/lib64:/apex/com.android.vndk.v30/lib64:/system/lib64:/apex/com.android.runtime/lib64/bionic
+ExecStart=/vendor/bin/cnss-daemon -n -l
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

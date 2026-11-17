@@ -24,6 +24,10 @@ RUN chmod 600 /etc/NetworkManager/system-connections/*.nmconnection \
         ssh.service NetworkManager.service avahi-daemon.service \
         systemd-timesyncd.service systemd-resolved.service \
         serial-getty@ttyGS0.service \
+    # Modem + wifi: Android vendor daemons on Ubuntu (see docs/log.md, P6).
+    && systemctl enable android-logd.service android-env.service modem.service \
+        android-daemon@rmt_storage.service android-daemon@tftp_server.service \
+        android-daemon@pd-mapper.service cnss-daemon.service \
     # No display, no keyboard: nothing to do on tty1.
     && systemctl mask getty@tty1.service \
     # Host keys are generated on first boot (ssh.service drop-in).
