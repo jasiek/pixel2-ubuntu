@@ -57,6 +57,7 @@ setup_usb
         sleep 2
     done
 ) &
+getty_loop=$!
 
 # ---- debug shell ------------------------------------------------------------
 debug_shell() {
@@ -108,6 +109,10 @@ mount -t ext4 -o rw,noatime "$root" /newroot || debug_shell "mounting $root fail
 
 # ---- hand over to systemd ---------------------------------------------------
 log "switching root to $root"
+# Stop the serial shell loop: after switch_root its binaries are gone, so it
+# would spin (thousands of failed forks per second) and fight systemd's getty.
+kill "$getty_loop" 2>/dev/null
+killall getty 2>/dev/null
 cp /tmp/init.log /newroot/run/initramfs.log 2>/dev/null
 umount /tmp
 umount /dev/pts
