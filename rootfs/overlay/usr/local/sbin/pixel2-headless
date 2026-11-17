@@ -1,12 +1,23 @@
 #!/bin/sh
 # Headless: no one looks at the screen, and it's an OLED (a static image
 # burns in). The bootloader leaves its splash lit ("continuous splash") and
-# the kernel only takes the panel over on the first unblank. So: unblank
-# (take over), then power the panel down. Needs the factory DTB (panel node).
+# the kernel only takes the panel over on the first unblank. Needs the
+# factory DTB (panel node). This exact sequence turned the panel off by hand
+# (2026-11-17); unblank + blank alone did NOT (panel stayed lit although
+# show_blank_event said panel_power_on = 0). The open/close of /dev/fb0 is
+# what triggers mdss_fb_release_all -> real power-down.
 fb=/sys/class/graphics/fb0
 echo 0 > /sys/class/leds/lcd-backlight/brightness 2>/dev/null
-echo 0 > $fb/blank 2>/dev/null
+# blank=1 first matters: from the boot state (panel_power_on 0) a plain
+# unblank only flips the driver's bookkeeping. 0 -> 2 (blank=1) -> 1 (unblank)
+# makes the driver really run the panel; the release then sends the real
+# panel-off commands (dmesg: "INTR_CMD_MDP_DONE set but isr not fired").
+echo 1 > $fb/blank 2>/dev/null
+sleep 2
+echo 0 > $fb/blank 2>/dev/null          # unblank: kernel takes the panel over
+sleep 2
+dd if=/dev/zero of=/dev/fb0 bs=1M count=8 2>/dev/null   # open + release fb0 (write itself fails: ENODEV)
 sleep 1
 echo 4 > $fb/blank 2>/dev/null          # FB_BLANK_POWERDOWN
-cat $fb/show_blank_event 2>/dev/null    # expect panel_power_on = 0
+cat $fb/show_blank_event 2>/dev/null
 exit 0
