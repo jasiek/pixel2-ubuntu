@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P5.2
+## ▶ RESUME HERE: P6.1
 
 ---
 
@@ -101,14 +101,14 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Debug images now turn hangs into panics (auto-reboot) and return to fastboot after 10 min, so unattended runs can't get stuck again.
   - When the shell is up: `scripts/initrd-sh.py '<cmd>'` (telnet) or `scripts/serial-sh.py '<cmd>'` (USB serial).
 - [x] **P5.1** ⚠️ Overwrites Android's data partition: `fastboot flash userdata build/rootfs.simg`
-- [ ] **P5.2** `fastboot boot build/boot.img`
-- [ ] **P5.3** On the Mac, a new USB network interface appears (check `ifconfig`). Give it `172.16.42.2/24`, then `ssh ubuntu@172.16.42.1`.
+- [x] **P5.2** `fastboot boot build/boot.img`
+- [x] **P5.3** On the Mac, a new USB network interface appears (check `ifconfig`). Give it `172.16.42.2/24`, then `ssh ubuntu@172.16.42.1`.
   - Gate: you get a shell. 🎉 **Milestone 1: Ubuntu 24.04 is running on the Pixel 2.**
-- [ ] **P5.4** If P5.3 failed:
+- [x] **P5.4** If P5.3 failed:
   - Try `telnet 172.16.42.1` (initramfs debug shell).
   - No network at all? Check `/sys/fs/pstore` on the next boot.
   - systemd refuses kernel 4.4? Switch to Ubuntu 22.04 and log the decision.
-- [ ] **P5.5** Save `uname -a`, `systemctl --failed` and notable `dmesg` errors in `docs/log.md`.
+- [x] **P5.5** Save `uname -a`, `systemctl --failed` and notable `dmesg` errors in `docs/log.md`.
 
 ## Phase 6: Wifi (2 h to 2 days)
 - [ ] **P6.1** Mount `vendor_a` → `/vendor` and the modem partition → `/firmware`, both read-only, via systemd mount units. The kernel loads wifi firmware from there.

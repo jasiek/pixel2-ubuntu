@@ -55,3 +55,10 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   4. growfs failed: "There are errors in the filesystem". The ext4 error is `ext4_has_uninit_itable: Inode table for bg 0 marked as needing zeroing`, because mke2fs lazy itable init leaves bg 0 without INODE_ZEROED. Fix: `mkfs -E lazy_itable_init=0,lazy_journal_init=0`. Checked first: img2simg encodes zeros as FILL chunks (19 RAW + 19 FILL, no DONT_CARE), so the flashed itables really are zero.
   5. PIDs at 1.9 M after 6 min: the initramfs getty loop survived switch_root and spun because its binaries were gone. Fix: kill it before switch_root.
   - Clock starts at 2026-10-12 (systemd build-time floor; no RTC sync yet). timesyncd should fix it once networking works.
+- Rebuilt with the five fixes, reflashed userdata, `fastboot boot build/boot.img`. SSH port open ~18 s after boot. 🎉 **Milestone 1: `ssh ubuntu@172.16.42.1` works.** (`scripts/ssh.sh` helper.) P5.2–P5.5 done.
+  - `Linux pixel2 4.4.223-walleye-ubuntu #3 SMP PREEMPT`, Ubuntu 24.04.5, `systemctl is-system-running` = **running**, no failed units.
+  - htc_battery loads (battery 99% Charging). Root grew to 111 G (271 M used). /vendor = sda41 (vendor_b) ro. 3.6 GB RAM, 8 CPUs.
+  - Mac got 172.16.42.106 from NM's shared-mode DHCP on en9. PIDs stable (fork storm fixed).
+  - Clock = 2026-10-12, NTP unsynced (no internet yet).
+  - dmesg: 394 err-level lines, all Android-hardware noise. Top ones: `ufshcd_ioctl: User buffer is NULL` x82 (something probes the UFS ioctl), ASoC tavil platform not registered (audio), camera/msm_bus/i2c probe failures, `[LASER]` sensor.
+  - Oddity: `fastboot boot` took 302 s to return (normally a few seconds), but the boot itself was fine.
