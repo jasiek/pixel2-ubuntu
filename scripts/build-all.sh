@@ -5,6 +5,10 @@
 #
 #   scripts/build-all.sh          # only the steps whose inputs changed
 #   FORCE=1 scripts/build-all.sh  # every step again
+#   MAINLINE=0 scripts/build-all.sh  # skip the mainline kernel (P8.3; on by default)
+#
+# With mainline, the rootfs also carries kernel 7.2.2's modules + firmware
+# helpers and build/mainline/boot-mainline.img (`fastboot boot` it).
 #
 # Each step stores a hash of its inputs in build/.stamps/<step> and runs again
 # when that hash changes or its output is missing. Hashes rather than mtimes:
@@ -42,8 +46,11 @@ echo "ok"
 
 # ---- 2. Sources and firmware -----------------------------------------------
 say "2/5 Sources and firmware"
-# Only what this build uses (the mainline experiment's sources are fetched on demand).
+# Only what this build uses.
+MAINLINE=${MAINLINE:-1}
 SUBS=(external/kernel-msm external/mkbootimg external/qbootctl)
+[ "$MAINLINE" = 0 ] || SUBS+=(external/linux-mainline external/porthole-pmaports \
+    external/pil-squasher external/qcom-diag external/qca-swiss-army-knife)
 if git submodule status "${SUBS[@]}" | grep -q '^-'; then
     echo "Fetching submodules (the kernel is a shallow clone, a few hundred MB)."
     git submodule update --init "${SUBS[@]}"
@@ -146,11 +153,32 @@ H_BOOTIMG=$(hash_of firmware/boot.img scripts/build-bootimg.sh scripts/make-boot
     "@$(git -C external/mkbootimg rev-parse HEAD)" "@$H_KERNEL" "@$H_INITRAMFS")
 step bootimg build/boot.img "$H_BOOTIMG" scripts/build-bootimg.sh
 
+H_ML=@no-mainline
+if [ "$MAINLINE" != 0 ]; then
+    H_MTOOLS=$(hash_of scripts/build-modem-tools.sh "@$(git -C external/pil-squasher rev-parse HEAD)" \
+        "@$(git -C external/qcom-diag rev-parse HEAD)" "@$H_DOCKER")
+    step modem-tools build/modem-tools/diag-router "$H_MTOOLS" scripts/build-modem-tools.sh
+
+    H_MFW=$(hash_of firmware/vendor.img scripts/build-mainline-fw.sh \
+        "@$(git -C external/qca-swiss-army-knife rev-parse HEAD)" "@$H_DOCKER")
+    step mainline-fw build/mainline/fw/ath10k/board-2.bin "$H_MFW" scripts/build-mainline-fw.sh
+
+    H_MKERNEL=$(hash_of kernel/mainline scripts/build-mainline.sh \
+        "@$(git -C external/linux-mainline rev-parse HEAD)" \
+        "@$(git -C external/porthole-pmaports rev-parse HEAD)" "@$H_DOCKER")
+    step mainline build/mainline/out/arch/arm64/boot/Image.gz "$H_MKERNEL" scripts/build-mainline.sh
+
+    H_MBOOT=$(hash_of scripts/build-mainline-bootimg.sh scripts/make-bootimg.sh "@$H_MKERNEL" "@$H_INITRAMFS")
+    step mainline-bootimg build/mainline/boot-mainline.img "$H_MBOOT" scripts/build-mainline-bootimg.sh
+    H_ML="@$H_MTOOLS $H_MFW $H_MKERNEL $H_MBOOT"
+fi
+
 H_ROOTFS=$(hash_of rootfs scripts/build-rootfs.sh build/wifi.ssid build/wifi.pass build/ssh/pixel2_ed25519.pub \
     "@$(cat ~/.ssh/*.pub 2>/dev/null | sort -u)" \
-    "@$H_KERNEL" "@$H_STUBS" "@$H_QBOOTCTL" "@$H_SCREEN")
-step rootfs build/rootfs.simg "$H_ROOTFS" scripts/build-rootfs.sh
+    "@$H_KERNEL" "@$H_STUBS" "@$H_QBOOTCTL" "@$H_SCREEN" "$H_ML")
+step rootfs build/rootfs.simg "$H_ROOTFS" env MAINLINE="$MAINLINE" scripts/build-rootfs.sh
 
 say "Done"
 ls -lh build/boot.img build/rootfs.simg | awk '{print $5, $9}'
+[ "$MAINLINE" = 0 ] || ls -lh build/mainline/boot-mainline.img | awk '{print $5, $9, "(fastboot boot)"}'
 echo "Next: flash the phone (PLAN.md P9.2, scripts/flash.sh)."

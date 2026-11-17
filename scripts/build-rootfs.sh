@@ -12,6 +12,10 @@
 # SSH keys installed for user ubuntu: every ~/.ssh/*.pub plus the project
 # key build/ssh/pixel2_ed25519.pub (created if missing).
 # Wifi: build/wifi.ssid + build/wifi.pass become an autoconnect NM profile.
+# Mainline kernel (P8.3), if built: its modules, pil-squasher + diag-router
+# (build-modem-tools.sh), ath10k board data (build-mainline-fw.sh) and
+# /boot/boot-mainline.img. Modem firmware is made on the phone at boot
+# (pixel2-modem-fw.service).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd -P)"
@@ -33,7 +37,7 @@ if [ ! -f /.dockerenv ]; then
     cid=$(docker create --platform linux/arm64 pixel2-rootfs)
     trap 'docker rm -f "$cid" >/dev/null' EXIT
     docker export "$cid" -o build/rootfs.tar
-    exec "$REPO/scripts/dev.sh" env ROOTFS_SIZE="$SIZE" /work/scripts/build-rootfs.sh
+    exec "$REPO/scripts/dev.sh" env ROOTFS_SIZE="$SIZE" MAINLINE="${MAINLINE:-1}" /work/scripts/build-rootfs.sh
 fi
 
 # ---- inside the build container (as root) ----
@@ -60,6 +64,20 @@ install -m 755 /work/build/qbootctl/qbootctl "$R/usr/local/sbin/qbootctl"
 # Screen console (scripts/build-screen.sh, pixel2-screen.service).
 install -m 755 /work/build/screen/pixel2-screen "$R/usr/local/sbin/pixel2-screen"
 depmod -b "$R" "$KREL"
+
+# Mainline kernel (P8.3), when scripts/build-all.sh built it.
+ML=build/mainline/modules-install/lib/modules
+if [ "${MAINLINE:-1}" != 0 ] && [ -d "$ML" ] && [ -f build/mainline/boot-mainline.img ]; then
+    MKREL=$(ls "$ML")
+    cp -a "$ML/$MKREL" "$R/lib/modules/"
+    depmod -b "$R" "$MKREL"
+    install -m 755 build/modem-tools/pil-squasher build/modem-tools/diag-router "$R/usr/local/sbin/"
+    install -d "$R/lib/firmware/ath10k/WCN3990/hw1.0"
+    install -m 644 build/mainline/fw/ath10k/board-2.bin build/mainline/fw/ath10k/firmware-5.bin \
+        "$R/lib/firmware/ath10k/WCN3990/hw1.0/"
+    install -m 644 build/mainline/boot-mainline.img "$R/boot/boot-mainline.img"
+    echo "mainline $MKREL included"
+fi
 
 # SSH access.
 install -d -m 700 -o 1000 -g 1000 "$R/home/ubuntu/.ssh"

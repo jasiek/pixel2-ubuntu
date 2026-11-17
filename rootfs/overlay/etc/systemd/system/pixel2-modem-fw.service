@@ -1,0 +1,13 @@
+[Unit]
+Description=Mainline modem/wifi firmware from the phone's own partitions
+After=vendor.service android-env.service
+Requires=vendor.service
+Before=rmtfs.service tqftpserv.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/pixel2-modem-fw
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,44 @@
+#!/bin/sh
+# Build the mainline kernel's modem + wifi firmware from this phone's own
+# Android partitions (P8.3; blobs never leave the phone, never in git).
+# Runs on either kernel, before rmtfs. Skips if already done for this source.
+#
+#   /lib/firmware/qcom/msm8998/wahoo/  mba.mbn, modem.mbn (squashed),
+#       modemr.jsn (modem partition), modemuw.jsn, wlanmdsp.mbn,
+#       ipa_fws.mbn (squashed) (vendor partition)
+# The ath10k board data (board-2.bin, firmware-5.bin) is baked into the
+# rootfs by scripts/build-rootfs.sh.
+set -eu
+W=/lib/firmware/qcom/msm8998/wahoo
+STAMP=$W/.source
+suffix=$(sed -n 's/.*androidboot.slot_suffix=\(_[ab]\).*/\1/p' /proc/cmdline)
+[ -n "$suffix" ] || suffix=_a
+by=/dev/disk/by-partlabel
+
+# Modem partition: /firmware on 4.4 (android-env), else mount it here.
+M=/firmware/image
+tmp=""
+cleanup() { [ -n "$tmp" ] && { umount "$tmp" 2>/dev/null; rmdir "$tmp"; }; return 0; }
+trap cleanup EXIT
+if [ ! -f $M/modem.mdt ]; then
+    tmp=$(mktemp -d)
+    mount -t vfat -o ro,shortname=lower "$by/modem$suffix" "$tmp"
+    M=$tmp/image
+fi
+V=/vendor/firmware
+[ -f $V/wlanmdsp.mbn ] || { echo "no $V (vendor.service)"; exit 1; }
+
+# Same source files as last time: nothing to do.
+src=$(cat $M/modem.mdt $M/mba.mbn $V/wlanmdsp.mbn $V/ipa_fws.mdt | sha256sum | cut -c1-16)
+if [ "$(cat $STAMP 2>/dev/null)" = "$src" ] && [ -f $W/modem.mbn ]; then
+    echo "firmware up to date ($src)"
+    exit 0
+fi
+install -d $W
+install -m 644 $M/mba.mbn $M/modemr.jsn $W/
+install -m 644 $V/modemuw.jsn $V/wlanmdsp.mbn $W/
+pil-squasher $W/modem.mbn $M/modem.mdt
+pil-squasher $W/ipa_fws.mbn $V/ipa_fws.mdt
+chmod 644 $W/*.mbn
+echo "$src" > $STAMP
+echo "firmware built from modem$suffix + vendor ($src)"

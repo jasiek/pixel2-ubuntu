@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         avahi-daemon libnss-mdns \
         e2fsprogs nano less htop usbutils \
         unattended-upgrades \
+        rmtfs tqftpserv qrtr-tools \
     && rm -rf /var/lib/apt/lists/*
 
 COPY overlay/ /
@@ -32,6 +33,10 @@ RUN chmod 600 /etc/NetworkManager/system-connections/*.nmconnection \
         pixel2-boot-successful.service pixel2-screen.service \
         pixel2-status-led.service \
         pixel2-charge-limit.service \
+    # Mainline kernel (P8.3): units gated with ConditionKernelVersion.
+    && systemctl enable pixel2-modem-fw.service diag-router.service \
+        rmtfs.service tqftpserv.service \
+        pixel2-wifi-mac.service pixel2-wifi-mac-record.service \
     # No keyboard and no VT kernel: the screen is drawn by pixel2-screen.
     && systemctl mask getty@tty1.service \
     # Host keys are generated on first boot (ssh.service drop-in).

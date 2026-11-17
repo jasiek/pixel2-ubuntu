@@ -7,7 +7,8 @@
 #
 # Modules: build/mainline/modules-install (scripts/build-mainline.sh).
 #
-# Firmware is built on the phone from its own partitions (never committed):
+# Firmware is built on the phone from its own partitions by pixel2-modem-fw
+# (same as at boot; never committed):
 #   /lib/firmware/qcom/msm8998/wahoo/  mba.mbn, modem.mbn (squashed), modemr.jsn,
 #                                      modemuw.jsn, wlanmdsp.mbn, ipa_fws.mbn (squashed)
 #   /lib/firmware/ath10k/WCN3990/hw1.0/ board-2.bin (walleye bdwlan.*), firmware-5.bin
@@ -34,18 +35,13 @@ STAGE=$(mktemp -d); trap 'rm -rf "$STAGE"' EXIT
 cp build/modem-tools/pil-squasher build/modem-tools/diag-router $FW/board-2.bin $FW/firmware-5.bin "$STAGE/"
 COPYFILE_DISABLE=1 tar --no-xattrs -cf - -C "$STAGE" . | scripts/ssh.sh 'sudo sh -euc "
 T=\$(mktemp -d); tar -C \$T -xf -
-W=/lib/firmware/qcom/msm8998/wahoo; A=/lib/firmware/ath10k/WCN3990/hw1.0
-install -d \$W \$A
-install -m 644 /firmware/image/mba.mbn /firmware/image/modemr.jsn \$W/
-install -m 644 /vendor/firmware/modemuw.jsn /vendor/firmware/wlanmdsp.mbn \$W/
-\$T/pil-squasher \$W/modem.mbn /firmware/image/modem.mdt
-\$T/pil-squasher \$W/ipa_fws.mbn /vendor/firmware/ipa_fws.mdt
-chmod 644 \$W/*.mbn
+A=/lib/firmware/ath10k/WCN3990/hw1.0
+install -d \$A
 install -m 644 \$T/board-2.bin \$T/firmware-5.bin \$A/
-install -m 755 \$T/diag-router /usr/local/sbin/diag-router
+install -m 755 \$T/diag-router \$T/pil-squasher /usr/local/sbin/
 rm -rf \$T
 DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rmtfs tqftpserv qrtr-tools >/dev/null
 systemctl daemon-reload
-systemctl enable -q diag-router.service rmtfs.service tqftpserv.service pixel2-wifi-mac.service pixel2-wifi-mac-record.service
-ls -la \$W \$A
+systemctl enable -q pixel2-modem-fw.service diag-router.service rmtfs.service tqftpserv.service pixel2-wifi-mac.service pixel2-wifi-mac-record.service
+/usr/local/sbin/pixel2-modem-fw
 "'
