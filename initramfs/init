@@ -28,10 +28,6 @@ G=/sys/kernel/config/usb_gadget/g1
 setup_usb() {
     mkdir -p $G/strings/0x409 $G/functions/ncm.usb0 $G/functions/acm.GS0 \
              $G/configs/c.1/strings/0x409
-    # Fixed MACs (locally administered): otherwise each bind picks random ones and
-    # the Mac treats the phone as a brand-new network interface every boot.
-    echo 02:50:49:58:32:01 > $G/functions/ncm.usb0/dev_addr    # phone
-    echo 02:50:49:58:32:02 > $G/functions/ncm.usb0/host_addr   # Mac
     echo 0x18d1 > $G/idVendor
     echo 0xd001 > $G/idProduct
     echo "Google"           > $G/strings/0x409/manufacturer
