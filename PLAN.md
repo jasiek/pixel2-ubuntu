@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P6.R (phone in Android again after the fixed-MAC crash; images rebuilt, needs the buttons)
+## ▶ RESUME HERE: P6.5 (needs your wifi name + password) and Phase 7 (needs your OK to flash boot_a/boot_b)
 
 ---
 
@@ -116,7 +116,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Gate: `wlan0` exists.
 - [x] **P6.3** No `wlan0`? Read `dmesg` for cnss / qrtr / rmt_storage / pd-mapper errors. Try the Linux packages `qrtr-tools`, `rmtfs`, `pd-mapper`.
 - [x] **P6.4** ~~Skipped: not needed.~~ The vendor daemons run directly on Ubuntu (no container), see docs/log.md. Still nothing? Fall back to running Android vendor services in an LXC container (the Halium approach). Log the decision.
-- [ ] **P6.R** Recover after the fallback to Android (2026-11-17):
+- [x] **P6.R** _Done 2026-11-17: reflashed userdata, booted, SSH + wifi scan (13 networks) work with no manual steps. Step 2 skipped: reflashed directly._ Recover after the fallback to Android (2026-11-17):
   1. On the phone: hold **Power + Volume Down** until the bootloader screen appears.
   2. `scripts/try-boot.sh build/boot-debug.img`, then `scripts/initrd-sh.py 'dd if=/dev/sda45 bs=1024 skip=1 count=1 | hexdump -C | head -12'`. Check whether Android reformatted userdata (label at 0x478: `ubuntu` = intact).
   3. `scripts/initrd-sh.py reboot-bootloader`, then `fastboot flash userdata build/rootfs.simg`. The rebuilt image already contains all the wifi work.

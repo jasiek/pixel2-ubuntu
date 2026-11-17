@@ -83,3 +83,8 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - Lesson: until our boot.img is flashed (Phase 7), any failed tethered boot falls back to Android, and Android destroys userdata.
 - Recovery attempt (owner pressed the buttons): `boot-debug.img` also reset into Android (18d1:4ee1). **Cause: the fixed-MAC change.** In this kernel `f_ncm` creates its net device only in `ncm_bind()`, so writing `ncm.usb0/dev_addr` before bind dereferences NULL. PID 1 dies, the kernel panics, the phone reboots into Android. After bind the write returns EBUSY. Reverted, with a warning comment in both scripts. Rebuilt the initramfs, boot images and rootfs (all match the repo now).
 - The phone is in Android again (adb off), so it needs the buttons once more.
+- **P6.R done (2026-11-17, ~12:05 CET).** Owner pressed the buttons; phone was in fastboot. Skipped the userdata check and reflashed `build/rootfs.simg` directly, then `fastboot boot build/boot.img`.
+  - The kernel started about 5 min after the `fastboot boot` command, the same oddity as the 302 s in P5. Probably this bootloader is slow to boot a downloaded image. Not a problem, but `try-boot.sh` timeouts must allow for it.
+  - USB networking came up by itself (Mac en9 got 172.16.42.71 by DHCP). The "Mac NCM no carrier" problem did not come back. It may have been this delay, not a real fault.
+  - From the fresh image, with no manual steps: system `running`, no failed units, android-env/modem/cnss-daemon active, `wlan0` up, 13 networks in a scan.
+  - Small gap: `/run/initramfs.log` is missing, because systemd mounts a new tmpfs on /run and hides the copy. Harmless.
