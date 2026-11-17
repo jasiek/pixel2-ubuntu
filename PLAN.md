@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P6.R (phone fell back to Android; needs the buttons, see Phase 6)
+## ▶ RESUME HERE: P6.R (phone in Android again after the fixed-MAC crash; images rebuilt, needs the buttons)
 
 ---
 
