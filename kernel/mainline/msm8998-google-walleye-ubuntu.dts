@@ -148,10 +148,10 @@
  * without it nothing answers on the bus. Chain: l28 -> ts_vdd -> ts_rst.
  */
 /*
- * PARKED (2026-11-17): l28 at 3.3 V hard-hangs full Ubuntu boots (tests 25,
- * 26, 29: no USB, no watchdog), even with rmi4 + display blacklisted; probe
- * initramfs boots (built-ins only, tests 27/28) survive it. Without l28 the
- * chip doesn't answer, so touch stays disabled until the hang is understood.
+ * l28 stays at the wahoo dtsi's 3.008 V. The vendor runs it at 3.3 V, but on
+ * mainline 3.3 V froze every boot that bound the USB gadget early (tests
+ * 25-30: no USB, no watchdog; l28, l20 (UFS) and l24 (USB PHY) share BOB,
+ * set to 3.312-3.6 V here). At 3.008 V the chip answers at 0x20 (test 31).
  */
 
 / {
@@ -160,6 +160,7 @@
 		regulator-name = "ts_vdd";
 		gpio = <&pmi8998_gpios 2 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
+		vin-supply = <&vreg_l28_3p0>;
 		startup-delay-us = <20000>;
 	};
 
@@ -207,7 +208,6 @@
 
 	touchscreen@20 {
 		compatible = "syna,rmi4-i2c";
-		status = "disabled";	/* PARKED, see l28 note above */
 		reg = <0x20>;
 		#address-cells = <1>;
 		#size-cells = <0>;
