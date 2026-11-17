@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         e2fsprogs nano less htop usbutils \
         unattended-upgrades \
         rmtfs tqftpserv qrtr-tools \
+        libyaml-0-2 libevent-2.1-7t64 libevent-pthreads-2.1-7t64 libyuv0 libtiff6 libdw1t64 libunwind8 \
+        gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly \
+        v4l-utils \
     && rm -rf /var/lib/apt/lists/*
 
 COPY overlay/ /

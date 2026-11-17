@@ -14,7 +14,7 @@
 # Wifi: build/wifi.ssid + build/wifi.pass become an autoconnect NM profile.
 # Mainline kernel (P8.3), if built: its modules, pil-squasher + diag-router
 # (build-modem-tools.sh), ath10k board data (build-mainline-fw.sh) and
-# /boot/boot-mainline.img. Modem firmware is made on the phone at boot
+# /boot/boot-mainline.img, libcamera (scripts/build-libcamera.sh). Modem firmware is made on the phone at boot
 # (pixel2-modem-fw.service).
 set -euo pipefail
 
@@ -76,6 +76,9 @@ if [ "${MAINLINE:-1}" != 0 ] && [ -d "$ML" ] && [ -f build/mainline/boot-mainlin
     install -m 644 build/mainline/fw/ath10k/board-2.bin build/mainline/fw/ath10k/firmware-5.bin \
         "$R/lib/firmware/ath10k/WCN3990/hw1.0/"
     install -m 644 build/mainline/boot-mainline.img "$R/boot/boot-mainline.img"
+    # Camera (P8.5): libcamera + cam + GStreamer libcamerasrc (build-libcamera.sh).
+    cp -a build/libcamera/root/usr/local/. "$R/usr/local/"
+    chroot "$R" ldconfig
     echo "mainline $MKREL included"
 fi
 

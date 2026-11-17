@@ -1,0 +1,38 @@
+#!/bin/sh
+# Take pictures and videos with the Pixel 2 cameras (P8.5, mainline kernel).
+#   pixel2-camera photo [rear|front] [file.jpg]        (default rear, ./photo-<time>.jpg)
+#   pixel2-camera video [rear|front] [seconds] [file.mp4]  (default rear, 10 s)
+#   pixel2-camera list
+# libcamera (built by scripts/build-libcamera.sh, under /usr/local) + GStreamer.
+# Photos: the first ~2 s of frames let auto-exposure settle; only the last
+# frame is kept. Video: 1280x720 H.264 (x264, CPU) in MP4.
+set -eu
+export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
+REAR=/base/soc@0/cci@ca0c000/i2c-bus@0/camera@1a
+FRONT=/base/soc@0/cci@ca0c000/i2c-bus@1/camera@10
+ts=$(date +%Y%m%d-%H%M%S)
+cam_of() { case "${1:-rear}" in rear) echo $REAR ;; front) echo $FRONT ;; *) echo "rear or front, not '$1'" >&2; exit 2 ;; esac; }
+
+case "${1:-}" in
+list)
+    cam -l 2>/dev/null ;;
+photo)
+    c=$(cam_of "${2:-rear}"); out=${3:-photo-$ts.jpg}
+    tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+    gst-launch-1.0 -q libcamerasrc camera-name="$c" ! identity eos-after=30 \
+        ! videoconvert ! jpegenc quality=92 \
+        ! multifilesink location="$tmp/f%05d.jpg" max-files=1 >/dev/null 2>&1
+    mv "$(ls "$tmp"/f*.jpg | tail -1)" "$out"
+    echo "$out" ;;
+video)
+    c=$(cam_of "${2:-rear}"); secs=${3:-10}; out=${4:-video-$ts.mp4}
+    gst-launch-1.0 -q -e libcamerasrc camera-name="$c" \
+        ! video/x-raw,width=1280,height=720 ! videoconvert ! queue \
+        ! x264enc speed-preset=ultrafast tune=zerolatency bitrate=6000 \
+        ! mp4mux ! filesink location="$out" >/dev/null 2>&1 &
+    pid=$!
+    sleep "$secs"; kill -INT $pid; wait $pid || true
+    echo "$out" ;;
+*)
+    sed -n 2,8p "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

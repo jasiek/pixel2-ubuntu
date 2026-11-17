@@ -50,7 +50,7 @@ say "2/5 Sources and firmware"
 MAINLINE=${MAINLINE:-1}
 SUBS=(external/kernel-msm external/mkbootimg external/qbootctl)
 [ "$MAINLINE" = 0 ] || SUBS+=(external/linux-mainline external/porthole-pmaports \
-    external/pil-squasher external/qcom-diag external/qca-swiss-army-knife)
+    external/pil-squasher external/qcom-diag external/qca-swiss-army-knife external/libcamera)
 if git submodule status "${SUBS[@]}" | grep -q '^-'; then
     echo "Fetching submodules (the kernel is a shallow clone, a few hundred MB)."
     git submodule update --init "${SUBS[@]}"
@@ -170,7 +170,10 @@ if [ "$MAINLINE" != 0 ]; then
 
     H_MBOOT=$(hash_of scripts/build-mainline-bootimg.sh scripts/make-bootimg.sh "@$H_MKERNEL" "@$H_INITRAMFS")
     step mainline-bootimg build/mainline/boot-mainline.img "$H_MBOOT" scripts/build-mainline-bootimg.sh
-    H_ML="@$H_MTOOLS $H_MFW $H_MKERNEL $H_MBOOT"
+    H_LIBCAMERA=$(hash_of scripts/build-libcamera.sh docker/libcamera "@$(git -C external/libcamera rev-parse HEAD)" \
+        "@$(git -C external/porthole-pmaports rev-parse HEAD)")
+    step libcamera build/libcamera/root/usr/local/bin/cam "$H_LIBCAMERA" scripts/build-libcamera.sh
+    H_ML="@$H_MTOOLS $H_MFW $H_MKERNEL $H_MBOOT $H_LIBCAMERA"
 fi
 
 H_ROOTFS=$(hash_of rootfs scripts/build-rootfs.sh build/wifi.ssid build/wifi.pass build/ssh/pixel2_ed25519.pub \
