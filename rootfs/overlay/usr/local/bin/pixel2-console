@@ -1,0 +1,32 @@
+#!/bin/bash
+# What the screen shows (run by pixel2-screen on a pseudo-terminal sized to
+# the display): a status header, then the newest journal lines. Redrawn every
+# REFRESH seconds; pixel2-screen only repaints characters that changed.
+REFRESH=${REFRESH:-10}
+B=$'\e[1m' C=$'\e[1;36m' G=$'\e[32m' Y=$'\e[33m' D=$'\e[90m' N=$'\e[0m'
+
+status() {
+    local cols=$1
+    printf '%s%s%s  %s\n' "$C" "$(hostname)" "$N" "$(date '+%a %d %b %H:%M')"
+    ip -4 -br addr 2>/dev/null | awk -v g="$G" -v n="$N" '$1 != "lo" && $3 != "" {printf "%-8s %s%s%s\n", $1, g, $3, n}'
+    local bat=/sys/class/power_supply/battery
+    if [ -r $bat/capacity ]; then
+        printf 'battery  %s%s%%%s %s\n' "$Y" "$(cat $bat/capacity)" "$N" "$(cat $bat/status 2>/dev/null)"
+    fi
+    printf 'up       %s\n' "$(uptime -p | sed 's/^up //')"
+    printf '%s%*s%s\n' "$D" "$cols" '' "$N" | tr ' ' '-'
+}
+
+while :; do
+    read -r rows cols < <(stty size 2>/dev/null) || { rows=60; cols=67; }
+    head=$(status "$cols")
+    used=$(printf '%s\n' "$head" | wc -l)
+    # Fixed screen: home, draw, clear the rest (no scrolling, no flicker).
+    printf '\e[H%s\n' "$head" | sed 's/$/\x1b[K/'
+    # Kernel [BATT] lines arrive every minute; leave them out.
+    journalctl -q --no-pager --no-hostname -o short -n 300 2>/dev/null \
+        | grep -v '\[BATT\]' | tail -n $((rows - used - 1)) | cut -c1-"$cols" | sed "s/^\([A-Z][a-z][a-z] [0-9 ][0-9] \)\([0-9:]*\) /${D}\2${N} /; s/\$/\x1b[K/" \
+        | head -n $((rows - used - 1))
+    printf '\e[J'
+    sleep "$REFRESH"
+done

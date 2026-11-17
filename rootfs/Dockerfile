@@ -29,10 +29,10 @@ RUN chmod 600 /etc/NetworkManager/system-connections/*.nmconnection \
     && systemctl enable android-logd.service android-env.service modem.service \
         android-daemon@rmt_storage.service android-daemon@tftp_server.service \
         android-daemon@pd-mapper.service cnss-daemon.service \
-        pixel2-boot-successful.service pixel2-headless.service \
+        pixel2-boot-successful.service pixel2-screen.service \
         pixel2-status-led.service \
         pixel2-charge-limit.service \
-    # No display, no keyboard: nothing to do on tty1.
+    # No keyboard and no VT kernel: the screen is drawn by pixel2-screen.
     && systemctl mask getty@tty1.service \
     # Host keys are generated on first boot (ssh.service drop-in).
     && rm -f /etc/ssh/ssh_host_* \

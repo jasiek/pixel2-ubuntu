@@ -23,6 +23,7 @@ if [ ! -f /.dockerenv ]; then
     [ -d "$MODS" ] || { echo "Missing $MODS. Run scripts/build-kernel.sh first."; exit 1; }
     [ -f build/android-stubs/libperipheral_client.so ] || scripts/build-android-stubs.sh
     [ -f build/qbootctl/qbootctl ] || scripts/build-qbootctl.sh
+    scripts/build-screen.sh
     mkdir -p build/ssh
     [ -f build/ssh/pixel2_ed25519 ] || ssh-keygen -q -t ed25519 -N "" -C pixel2-port-automation -f build/ssh/pixel2_ed25519
     cat ~/.ssh/*.pub build/ssh/pixel2_ed25519.pub 2>/dev/null | sort -u > build/ssh/authorized_keys
@@ -55,6 +56,8 @@ mkdir -p "$R/usr/local/lib/pixel2/android"
 install -m 644 /work/build/android-stubs/*.so "$R/usr/local/lib/pixel2/android/"
 # A/B slot marking (scripts/build-qbootctl.sh, pixel2-boot-successful.service).
 install -m 755 /work/build/qbootctl/qbootctl "$R/usr/local/sbin/qbootctl"
+# Screen console (scripts/build-screen.sh, pixel2-screen.service).
+install -m 755 /work/build/screen/pixel2-screen "$R/usr/local/sbin/pixel2-screen"
 depmod -b "$R" "$KREL"
 
 # SSH access.
