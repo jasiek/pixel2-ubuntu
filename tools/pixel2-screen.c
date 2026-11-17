@@ -530,8 +530,8 @@ static int has_touch(void)
 	if (!f)
 		return 0;
 	while (fgets(line, sizeof(line), f))
-		if (strstr(line, input_names[0]))
-			found = 1;
+		if (strstr(line, input_names[0]) || strstr(line, input_names[2]))
+			found = 1;	/* a touchscreen: 4.4 or mainline name */
 	fclose(f);
 	return found;
 }
