@@ -233,3 +233,28 @@
 		};
 	};
 };
+
+/*
+ * ---- Camera (P8.5), staged as in docs/camera-walleye.md --------------------
+ * M1: CCI only (pins as in msm8998.dtsi match walleye: gpio17-20, 2 mA).
+ *     master 0 = rear, master 1 = front. Sensors stay unpowered.
+ * M2: CAMSS, no ports yet. PHY rails as taimen: l2 1.2 V, l1 0.88 V (both
+ *     already on for DSI/UFS). MCLK pads at 8 mA on walleye (HTC), not 2 mA.
+ */
+&cci {
+	status = "okay";
+};
+
+&camss {
+	status = "okay";
+	vdda-supply = <&vreg_l2a_1p2>;
+	vdd_sec-supply = <&vreg_l1a_0p875>;
+};
+
+&cam_mclk0_default {
+	drive-strength = <8>;
+};
+
+&cam_mclk1_default {
+	drive-strength = <8>;
+};
