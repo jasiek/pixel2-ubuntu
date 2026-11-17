@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P6.1
+## ▶ RESUME HERE: P6.R (phone fell back to Android; needs the buttons, see Phase 6)
 
 ---
 
@@ -111,11 +111,18 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [x] **P5.5** Save `uname -a`, `systemctl --failed` and notable `dmesg` errors in `docs/log.md`.
 
 ## Phase 6: Wifi (2 h to 2 days)
-- [ ] **P6.1** Mount `vendor_a` → `/vendor` and the modem partition → `/firmware`, both read-only, via systemd mount units. The kernel loads wifi firmware from there.
-- [ ] **P6.2** Check `ip link`.
+- [x] **P6.1** Mount `vendor_a` → `/vendor` and the modem partition → `/firmware`, both read-only, via systemd mount units. The kernel loads wifi firmware from there.
+- [x] **P6.2** Check `ip link`.
   - Gate: `wlan0` exists.
-- [ ] **P6.3** No `wlan0`? Read `dmesg` for cnss / qrtr / rmt_storage / pd-mapper errors. Try the Linux packages `qrtr-tools`, `rmtfs`, `pd-mapper`.
-- [ ] **P6.4** Still nothing? Fall back to running Android vendor services in an LXC container (the Halium approach). Log the decision.
+- [x] **P6.3** No `wlan0`? Read `dmesg` for cnss / qrtr / rmt_storage / pd-mapper errors. Try the Linux packages `qrtr-tools`, `rmtfs`, `pd-mapper`.
+- [x] **P6.4** ~~Skipped: not needed.~~ The vendor daemons run directly on Ubuntu (no container), see docs/log.md. Still nothing? Fall back to running Android vendor services in an LXC container (the Halium approach). Log the decision.
+- [ ] **P6.R** Recover after the fallback to Android (2026-11-17):
+  1. On the phone: hold **Power + Volume Down** until the bootloader screen appears.
+  2. `scripts/try-boot.sh build/boot-debug.img`, then `scripts/initrd-sh.py 'dd if=/dev/sda45 bs=1024 skip=1 count=1 | hexdump -C | head -12'`. Check whether Android reformatted userdata (label at 0x478: `ubuntu` = intact).
+  3. `scripts/initrd-sh.py reboot-bootloader`, then `fastboot flash userdata build/rootfs.simg`. The rebuilt image already contains all the wifi work.
+  4. `scripts/try-boot.sh build/boot.img 180`. If there's no USB network, use `scripts/serial-sh.py`.
+  5. Find out why the last `boot.img` boot never brought up USB serial; pstore was lost to the Android boot.
+  6. Then do Phase 7 soon: with our boot.img flashed, a failed boot can't drop into Android and wipe userdata again.
 - [ ] **P6.5** Connect: `sudo nmcli dev wifi connect "<SSID>" password "<pw>"`.
   - Gate: `ssh ubuntu@pixel2.local` works with the USB cable unplugged.
 

@@ -62,3 +62,22 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - Clock = 2026-10-12, NTP unsynced (no internet yet).
   - dmesg: 394 err-level lines, all Android-hardware noise. Top ones: `ufshcd_ioctl: User buffer is NULL` x82 (something probes the UFS ioctl), ASoC tavil platform not registered (audio), camera/msm_bus/i2c probe failures, `[LASER]` sensor.
   - Oddity: `fastboot boot` took 302 s to return (normally a few seconds), but the boot itself was fine.
+- **P6 wifi works (2026-11-17).** `wlan0` (factory MAC 40:4e:36:…) scans 10 networks on 2.4 and 5 GHz. It comes up by itself on a cold boot. Chain, all Android vendor binaries run directly on Ubuntu, no container:
+  - **Kernel IPC is the old IPC Router (`CONFIG_IPC_ROUTER`), not QRTR**, so Linux rmtfs/pd-mapper/qrtr can't work. Use the vendor's.
+  - `android-env.service`:
+    - mounts `system$slot` → /android/system (bind /system);
+    - loop-mounts `com.android.runtime` and `com.android.vndk.current` APEX payloads (stored uncompressed in the zip; offset via perl) at /apex/…;
+    - mounts `modem$slot` (vfat) at /firmware;
+    - **/persist = overlayfs**: real partition read-only at /android/persist, writes go to /var/lib/pixel2/persist-overlay;
+    - /dev/block/bootdevice/by-name links, firmware path /run/pixel2-fw (vendor + modem images), modem restart_level=RELATED;
+    - `irsc_util /vendor/etc/sec_config` (without it the kernel IPC router blocks: "wait_for_irsc_completion").
+  - `android-props`: bionic reads a **legacy single-file property area** when /dev/__properties__ is a regular file. Built from androidboot.* and /etc/android/props.conf. rmt_storage needs ro.baseband=msm ("not supported on undefined target" otherwise).
+  - `android-logd`: liblog socket → journal (tag `android`). Essential for debugging.
+  - Daemons: rmt_storage (EFS in modemst1/2, fsg, fsc), tftp_server (modem pulls wlanmdsp.mbn etc.), pd-mapper (servloc; without it a kworker hangs in pd_locator_work), `modem.service` (holds /dev/subsys_modem open, which boots the modem).
+  - **cnss-daemon** downloads the BDF (bdwlan.b80, board_id 0x80) and the MAC to the WLAN firmware. Only then does icnss get FW_READY and wlan.ko probe. It links libperipheral_client.so (binder to pm-service), so we ship a **stub** (android/stubs/peripheral_client.c, freestanding clang build) that reports the modem online.
+  - Backups before any daemon wrote to them: modemst1/2, fsg, fsc, persist, ssd → firmware/backup/ (gitignored).
+  - Tools: scripts/ssh.sh, scripts/push-overlay.sh (live overlay update + clock set), scripts/build-android-stubs.sh, try-boot serial fallback.
+- Problems still open:
+  - **The Mac's NCM interface stopped coming up.** usb0 NO-CARRIER; macOS made an IOEthernetInterface with no BSD name. Serial still works. Committed fixed NCM MACs (02:50:49:58:32:01/02) in the initramfs; untested.
+  - **The next boot.img boot never showed USB serial, and the phone fell back to stock Android.** It came up as 18d1:4ee1 (MTP, adb off). Android most likely reformatted userdata (fstab: `formattable`) because it found our ext4. That wipes the Ubuntu rootfs. Needs the buttons to recover (PLAN P6.R). Rebuilt `build/rootfs.simg` (08:00Z) with all P6 work, ready to reflash.
+  - Lesson: until our boot.img is flashed (Phase 7), any failed tethered boot falls back to Android, and Android destroys userdata.
