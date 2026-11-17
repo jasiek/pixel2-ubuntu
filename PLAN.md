@@ -154,7 +154,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed. _Parked 2026-11-17: owner has no SIM card (SMS, data and calls need one)._ Found so far: modem subsystem `ONLINE` (it also runs the wifi firmware, so it stays on); the kernel has the downstream IPC router (`CONFIG_IPC_ROUTER`), not upstream QRTR, so ModemManager/libqmi can't use their QRTR path; `qmicli --device-open-qmi` on `/dev/smdcntl8` got no reply (hung). Next if picked up: QMI over the IPC router (AF_MSM_IPC sockets) or a backported QRTR.
 - [ ] **P8.3** Mainline kernel (owner go 2026-11-17). Research: `docs/mainline.md` (nobody has booted mainline on walleye; start from Porthole 7.2.2 + patches).
   - [x] P8.3.1 _Done: walleye uses dtbo_idx 3 = id 444 rev 3 (dtbo.img is shared: idx 0–5 id 444 rev 0–4/0x80, idx 6–12 ids 400–2704 incl. taimen 2704)._ Read walleye's dtbo ids: `/proc/cmdline` dtbo_idx + parse `firmware/dtbo.img` entries (no flashing).
-  - [ ] P8.3.2 Sources as submodules: Porthole pmaports (patches) + linux-stable v7.2.2 (shallow).
+  - [x] P8.3.2 _Done: linux-stable v7.2.2 (52c36105) + porthole-pmaports taimen-bringup, shallow._ Sources as submodules: Porthole pmaports (patches) + linux-stable v7.2.2 (shallow).
   - [ ] P8.3.3 Build container with a modern toolchain + `scripts/build-mainline.sh` → Image.gz + walleye DTB (fix panel/touch nodes: drop taimen's; no bootargs).
   - [ ] P8.3.4 `fastboot boot` test with the **stock dtbo** (nothing flashed). Gate: USB serial/network from our initramfs.
   - [ ] P8.3.5 Only if P8.3.4 fails on the overlay: crafted stub dtbo, flashed to the **inactive slot only** (owner OK first; current Ubuntu needs the stock dtbo for its panel).
