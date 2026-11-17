@@ -1,0 +1,15 @@
+# Run an Android vendor daemon (/vendor/bin/%i) with the bionic runtime.
+[Unit]
+Description=Android vendor daemon %i
+Requires=android-env.service
+After=android-env.service
+Before=modem.service
+
+[Service]
+Environment=LD_LIBRARY_PATH=/vendor/lib64:/apex/com.android.vndk.v30/lib64:/system/lib64:/apex/com.android.runtime/lib64/bionic
+ExecStart=/vendor/bin/%i
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

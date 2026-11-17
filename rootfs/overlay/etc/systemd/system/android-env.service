@@ -1,0 +1,16 @@
+[Unit]
+Description=Minimal Android environment for vendor modem/wifi daemons
+Requires=vendor.service
+After=vendor.service local-fs.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/android-env
+# Load the IPC router security rules; until then the kernel holds back
+# userspace QMI traffic ("wait_for_irsc_completion"). Android: vendor.irsc_util.
+Environment=LD_LIBRARY_PATH=/vendor/lib64:/apex/com.android.vndk.v30/lib64:/system/lib64:/apex/com.android.runtime/lib64/bionic
+ExecStartPost=/vendor/bin/irsc_util /vendor/etc/sec_config
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,54 @@
+#!/bin/sh
+# Prepare the minimal Android environment that the vendor modem/wifi daemons
+# (rmt_storage, tftp_server, pd-mapper; all bionic binaries) need on Ubuntu:
+#   /system, /apex/...   Android linker + libraries (from system$slot, read-only)
+#   /firmware            modem firmware (modem$slot, vfat, read-only)
+#   /persist             overlay: real persist stays read-only, modem writes
+#                        land in /var/lib/pixel2/persist-overlay
+#   /dev/block/bootdevice/by-name/*, /dev/__properties__, firmware search path
+set -eu
+slot=$(sed -n 's/.*androidboot\.slot_suffix=\(_[ab]\).*/\1/p' /proc/cmdline)
+by=/dev/disk/by-partlabel
+ismnt() { mountpoint -q "$1"; }
+
+# Android block device names.
+mkdir -p /dev/block/bootdevice/by-name
+for l in "$by"/*; do ln -sfn "$(readlink -f "$l")" "/dev/block/bootdevice/by-name/${l##*/}"; done
+
+mkdir -p /firmware /android/system /android/persist /persist /system \
+         /apex/com.android.runtime /apex/com.android.vndk.v30
+ismnt /firmware       || mount -t vfat -o ro,shortname=lower "$by/modem$slot" /firmware
+ismnt /android/system || mount -t ext4 -o ro "$by/system$slot" /android/system
+ismnt /system         || mount --bind /android/system/system /system
+
+# APEX payloads are stored (uncompressed) ext4 images inside zip files.
+apex() {
+    set -- "$1" "$2" $(perl /usr/local/lib/pixel2/apex-payload-offset.pl "/system/apex/$1.apex")
+    [ "$5" = 0 ] || { echo "android-env: $1 payload is compressed" >&2; exit 1; }
+    ismnt "$2" || mount -t ext4 -o "ro,loop,offset=$3,sizelimit=$4" "/system/apex/$1.apex" "$2"
+}
+apex com.android.runtime      /apex/com.android.runtime
+apex com.android.vndk.current /apex/com.android.vndk.v30
+
+# persist: factory calibration etc. Never written; writes go to the overlay.
+P=/var/lib/pixel2/persist-overlay
+mkdir -p "$P/upper" "$P/work"
+ismnt /android/persist || mount -t ext4 -o ro "$by/persist" /android/persist
+ismnt /persist || mount -t overlay overlay \
+    -o "lowerdir=/android/persist,upperdir=$P/upper,workdir=$P/work" /persist
+
+# Dirs the daemons expect on Android's /data.
+for d in modem lpass slpi tn; do mkdir -p "/data/vendor/tombstones/rfs/$d"; done
+
+/usr/local/sbin/android-props
+
+# One firmware search path for the kernel: /vendor/firmware + modem images.
+mkdir -p /run/pixel2-fw
+for f in /vendor/firmware/* /firmware/image/*; do ln -sfn "$f" /run/pixel2-fw/; done
+printf /run/pixel2-fw > /sys/module/firmware_class/parameters/path
+
+# A modem crash restarts only the modem, not the whole phone.
+for d in /sys/bus/msm_subsys/devices/*; do
+    [ "$(cat "$d/name")" = modem ] && echo RELATED > "$d/restart_level"
+done
+echo "android-env: ready (slot $slot)"

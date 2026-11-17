@@ -1,0 +1,16 @@
+# Boot the modem DSP and keep it up: the kernel powers a subsystem while
+# /dev/subsys_<name> is open (Android's pm-service does this). The WLAN
+# firmware runs on the modem, so wifi needs this.
+[Unit]
+Description=Modem subsystem (keeps /dev/subsys_modem open)
+Requires=android-env.service
+Wants=android-daemon@rmt_storage.service android-daemon@tftp_server.service android-daemon@pd-mapper.service
+After=android-env.service android-daemon@rmt_storage.service android-daemon@tftp_server.service android-daemon@pd-mapper.service
+
+[Service]
+ExecStart=/bin/sh -c 'exec 3</dev/subsys_modem; exec sleep infinity'
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
