@@ -15,6 +15,9 @@ echo "Google"              > $G/strings/0x409/manufacturer
 echo "Pixel 2 (Ubuntu)"    > $G/strings/0x409/product
 echo "pixel2-ubuntu"       > $G/strings/0x409/serialnumber
 mkdir -p $G/functions/ncm.usb0 $G/functions/acm.GS0
+# Do NOT write ncm.usb0/dev_addr or host_addr here: in this Android kernel the
+# NCM net device only exists after bind (ncm_bind), so the write dereferences
+# NULL and panics the kernel (2026-11-17). After bind it returns EBUSY.
 mkdir -p $G/configs/c.1/strings/0x409
 echo "NCM + ACM" > $G/configs/c.1/strings/0x409/configuration
 [ -e $G/configs/c.1/ncm.usb0 ] || ln -s $G/functions/ncm.usb0 $G/configs/c.1/

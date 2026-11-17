@@ -28,6 +28,9 @@ G=/sys/kernel/config/usb_gadget/g1
 setup_usb() {
     mkdir -p $G/strings/0x409 $G/functions/ncm.usb0 $G/functions/acm.GS0 \
              $G/configs/c.1/strings/0x409
+    # Do NOT write ncm.usb0/dev_addr or host_addr here: in this Android kernel the
+    # NCM net device only exists after bind (ncm_bind), so the write dereferences
+    # NULL and panics the kernel (2026-11-17). After bind it returns EBUSY.
     echo 0x18d1 > $G/idVendor
     echo 0xd001 > $G/idProduct
     echo "Google"           > $G/strings/0x409/manufacturer
