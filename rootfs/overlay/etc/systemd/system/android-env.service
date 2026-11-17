@@ -1,7 +1,8 @@
 [Unit]
 Description=Minimal Android environment for vendor modem/wifi daemons
 Requires=vendor.service
-After=vendor.service local-fs.target
+Wants=android-logd.service
+After=vendor.service android-logd.service local-fs.target
 
 [Service]
 Type=oneshot

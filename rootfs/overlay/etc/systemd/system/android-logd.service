@@ -1,0 +1,10 @@
+[Unit]
+Description=Android log socket (/dev/socket/logdw) -> journal
+Before=android-env.service
+
+[Service]
+ExecStart=/usr/local/sbin/android-logd
+SyslogIdentifier=android
+
+[Install]
+WantedBy=multi-user.target

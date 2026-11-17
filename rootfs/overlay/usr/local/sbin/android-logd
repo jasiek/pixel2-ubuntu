@@ -1,0 +1,27 @@
+#!/usr/bin/perl
+# Minimal stand-in for Android's logd: receive liblog datagrams on
+# /dev/socket/logdw and print them to stdout (-> journald).
+# Packet: u8 log_id, u16 tid, u32 sec, u32 nsec, then for text logs
+# u8 priority, tag\0, message\0. Binary event logs (id 2) are skipped.
+use strict;
+use warnings;
+use Socket;
+use IO::Handle;
+STDOUT->autoflush(1);
+my $path = '/dev/socket/logdw';
+mkdir '/dev/socket';
+unlink $path;
+socket(my $s, PF_UNIX, SOCK_DGRAM, 0) or die "socket: $!";
+bind($s, sockaddr_un($path)) or die "bind $path: $!";
+chmod 0222, $path;
+my @prio = qw(? ? V D I W E F S);
+while (1) {
+    defined(recv($s, my $buf, 65536, 0)) or next;
+    next if length $buf < 12;
+    my ($id, $tid) = unpack('Cv', $buf);
+    next if $id == 2 || $id == 5 || $id == 7;       # events, security, stats
+    my ($p, $rest) = unpack('C a*', substr($buf, 11));
+    my ($tag, $msg) = split /\0/, $rest, 3;
+    $msg //= ''; $msg =~ s/\s+$//;
+    printf "%s/%s(%d): %s\n", $prio[$p] // '?', $tag // '', $tid, $msg;
+}
