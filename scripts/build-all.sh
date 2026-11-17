@@ -71,7 +71,11 @@ fi
 if [ -s build/wifi.ssid ] && [ -s build/wifi.pass ]; then
     echo "wifi: profile from build/wifi.ssid + build/wifi.pass (delete both to be asked again)"
 else
-    echo "wifi: none (delete build/wifi.ssid to be asked again)"
+    if [ -e build/wifi.ssid ]; then
+        echo "wifi: none (delete build/wifi.ssid to be asked again)"
+    else
+        echo "wifi: none (run this in a terminal to be asked)"
+    fi
 fi
 
 # ---- 4. Build container ----------------------------------------------------
