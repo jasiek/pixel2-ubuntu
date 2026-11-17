@@ -1,0 +1,13 @@
+# Dim green breathing LED = Ubuntu is up. Dark = off, booting or shutting down.
+[Unit]
+Description=Status LED: breathe green while the system is up
+After=multi-user.target ssh.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/pixel2-status-led start
+ExecStop=/usr/local/sbin/pixel2-status-led stop
+
+[Install]
+WantedBy=multi-user.target
