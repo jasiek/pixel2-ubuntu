@@ -15,3 +15,7 @@ firmware/
 
 # Other
 .env
+
+# editor backups; empty temp files left by the kernel merge_config.sh run
+*~
+/sed??????
