@@ -1,0 +1,13 @@
+[Unit]
+Description=Battery charge limit (stop at 80%, resume at 70%)
+
+[Service]
+Environment=HIGH=80 LOW=70
+ExecStart=/usr/local/sbin/pixel2-charge-limit
+# Never leave charging switched off when the limiter isn't running.
+ExecStopPost=/bin/sh -c 'echo 0 > /sys/class/power_supply/battery/charge_disable'
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

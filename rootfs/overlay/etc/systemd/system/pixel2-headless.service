@@ -1,0 +1,9 @@
+[Unit]
+Description=Turn the screen off (headless device)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/pixel2-headless
+
+[Install]
+WantedBy=multi-user.target

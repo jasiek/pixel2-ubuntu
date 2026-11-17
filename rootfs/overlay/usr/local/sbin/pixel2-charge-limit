@@ -1,0 +1,18 @@
+#!/bin/sh
+# Keep the battery between LOW and HIGH percent when the phone lives on a
+# charger (a Li-ion cell held at 100% ages fast and can swell).
+# Uses the Qualcomm charger's battery/charge_disable switch; the phone keeps
+# running from USB power while charging is disabled.
+HIGH=${HIGH:-80}
+LOW=${LOW:-70}
+B=/sys/class/power_supply/battery
+while :; do
+    cap=$(cat $B/capacity 2>/dev/null || echo 50)
+    dis=$(cat $B/charge_disable 2>/dev/null || echo 0)
+    if [ "$cap" -ge "$HIGH" ] && [ "$dis" = 0 ]; then
+        echo 1 > $B/charge_disable && echo "charge-limit: ${cap}% >= ${HIGH}%, charging off"
+    elif [ "$cap" -le "$LOW" ] && [ "$dis" = 1 ]; then
+        echo 0 > $B/charge_disable && echo "charge-limit: ${cap}% <= ${LOW}%, charging on"
+    fi
+    sleep 60
+done

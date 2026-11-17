@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         network-manager dnsmasq-base wpasupplicant iw rfkill wireless-regdb \
         avahi-daemon libnss-mdns \
         e2fsprogs nano less htop usbutils \
+        unattended-upgrades \
     && rm -rf /var/lib/apt/lists/*
 
 COPY overlay/ /
@@ -28,7 +29,8 @@ RUN chmod 600 /etc/NetworkManager/system-connections/*.nmconnection \
     && systemctl enable android-logd.service android-env.service modem.service \
         android-daemon@rmt_storage.service android-daemon@tftp_server.service \
         android-daemon@pd-mapper.service cnss-daemon.service \
-        pixel2-boot-successful.service \
+        pixel2-boot-successful.service pixel2-headless.service \
+        pixel2-charge-limit.service \
     # No display, no keyboard: nothing to do on tty1.
     && systemctl mask getty@tty1.service \
     # Host keys are generated on first boot (ssh.service drop-in).
