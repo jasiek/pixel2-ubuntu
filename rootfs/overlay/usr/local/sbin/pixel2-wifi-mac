@@ -39,6 +39,8 @@ release() {
     [ -e "$HOLD" ] || return 0
     rm -f "$HOLD"
     for i in $(seq 1 30); do nmcli general reload conf 2>/dev/null && break; sleep 1; done
+    # NM only autoconnects once it has scan results for the new device.
+    sleep 2; nmcli device wifi rescan ifname wlan0 2>/dev/null || true
 }
 trap release EXIT
 
@@ -52,4 +54,5 @@ if [ "$(cat /sys/class/net/wlan0/address)" != "$mac" ]; then
     ip link set wlan0 down
     ip link set wlan0 address "$mac"
 fi
+ip link set wlan0 up   # a down link leaves wpa_supplicant "interface_disabled"
 echo "pixel2-wifi-mac: wlan0 uses the phone's real MAC"
