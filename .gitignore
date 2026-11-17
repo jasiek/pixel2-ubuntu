@@ -12,3 +12,6 @@ firmware/
 
 # macOS
 .DS_Store
+
+# Other
+.env
