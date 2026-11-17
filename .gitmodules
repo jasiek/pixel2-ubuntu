@@ -14,3 +14,9 @@
 	path = external/porthole-pmaports
 	url = https://github.com/porthole-dev/pmaports
 	branch = taimen-bringup
+	shallow = true
+[submodule "external/linux-mainline"]
+	shallow = true
+	ignore = dirty
+	path = external/linux-mainline
+	url = https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git

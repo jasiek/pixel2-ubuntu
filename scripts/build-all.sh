@@ -42,11 +42,13 @@ echo "ok"
 
 # ---- 2. Sources and firmware -----------------------------------------------
 say "2/5 Sources and firmware"
-if git submodule status | grep -q '^-'; then
+# Only what this build uses (the mainline experiment's sources are fetched on demand).
+SUBS=(external/kernel-msm external/mkbootimg external/qbootctl)
+if git submodule status "${SUBS[@]}" | grep -q '^-'; then
     echo "Fetching submodules (the kernel is a shallow clone, a few hundred MB)."
-    git submodule update --init
+    git submodule update --init "${SUBS[@]}"
 fi
-{ git submodule status | grep '^+' || true; } | while read -r line; do
+{ git submodule status "${SUBS[@]}" | grep '^+' || true; } | while read -r line; do
     warn "submodule not at the committed version: $line"
 done
 scripts/get-firmware.sh
