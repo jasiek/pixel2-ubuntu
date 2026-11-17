@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P8.5 camera (mainline 7.2.2 is the flashed kernel, boot_b). Waiting: P9.2 gate (someone else flashes a phone). Waiting: P9.2 gate. Also open: pick the phone's job
+## ▶ RESUME HERE: P8.5 lit-scene check (needs owner: light + point the phone), then camera follow-ups. Waiting: P9.2 gate (someone else flashes a phone). Waiting: P9.2 gate. Also open: pick the phone's job
 
 ---
 
@@ -174,6 +174,10 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Path: mainline (P8.3) CAMSS (Porthole carries msm8998 CAMSS patches) + sensor drivers + libcamera (`cam` / `libcamera-still`-style CLI, GStreamer `libcamerasrc` for video).
   - First steps: identify walleye's sensors from the downstream DT (rear/front sensor models, CSI ports, I2C addresses, regulators, MCLK); check mainline/Porthole drivers for them; check Porthole's taimen camera status.
   - Gate: a photo (JPEG) and a short video (MP4) taken from the shell, copied to the Mac.
+  - [x] _2026-11-17: both cameras work on mainline (docs/camera-walleye.md, tests 36-42)._ Kernel: Porthole's imx179/imx362/CAMSS/Easel/OIS drivers; walleye DT staged M1-M6 (CCI, CAMSS, Easel MIPI bypass, front IMX179, rear IMX362 + OIS + AF). Userspace: libcamera 0.7.2 + Porthole patches (`scripts/build-libcamera.sh`), `pixel2-camera photo|video [rear|front]`. In build-all and flashed (boot_b).
+  - [x] Gate (dark room): front photo 3200x2400 JPEG (colours right) and 1280x720 H.264 MP4, copied to the Mac.
+  - [ ] Check in a lit scene: rear photo, video quality (dark-room video was all gain noise), orientation/mirroring (front image looked mirrored).
+  - [ ] Follow-ups: rear rails are always on (driver-switched rails → chip ID -110); flash LED and laser ToF (M6 rest) not enabled; Easel modules make `reboot bootloader` unreliable? (see log).
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.

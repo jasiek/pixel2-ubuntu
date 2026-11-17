@@ -191,3 +191,4 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - Both cameras listed by libcamera; rear streams 4024x3032 RGB888 at 15 fps (frame black: lens faces the desk).
   - Side finding: `reboot bootloader` twice came back as a normal boot (after test 38; then from the flashed kernel); `systemctl reboot --reboot-argument=bootloader` worked every time since. Not understood yet.
   - Kernel WARN at boot: `pclk0_clk_src: rcg didn't update its configuration` (panel module load); display works.
+- P8.5 tests 42+: `pixel2-camera photo front` → 3200x2400 JPEG in 10.7 s (dark room, ceiling clock "2337" readable, colours right); `pixel2-camera video front 8` → 7.3 s 1280x720 H.264 MP4 (all gain noise in the dark). Test 42: build-all image with no blacklist brings up both cameras at boot. systemd-backlight made a no-op (EINVAL: panel off at boot). boot_b reflashed with the camera build; normal boot: running, 2 cameras, panel off.
