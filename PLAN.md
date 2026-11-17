@@ -160,7 +160,8 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [x] P8.3.5 _Not needed: the sink DTS avoids flashing dtbo._ Only if P8.3.4 fails on the overlay: crafted stub dtbo, flashed to the **inactive slot only** (owner OK first; current Ubuntu needs the stock dtbo for its panel).
   - [ ] P8.3.6 Bring-up order (each step: `fastboot boot`, nothing flashed):
     - [x] UFS + USB gadget + rootfs: _Ubuntu 24.04 runs on 7.2.2 (2026-11-17): running, 0 failed, cgroup2, cpufreq present._
-    - [ ] Charger + fuel gauge (battery %, charge limit via mainline `charge_behaviour`/disable) + RGB LED (leds-qcom-lpg).
+    - [x] Charger + fuel gauge + RGB LED: _work (battery %, voltage, charging; rgb:status lights)._
+    - [ ] Mainline variants of pixel2-charge-limit (input suspend via charger `status`) and pixel2-status-led (rgb:status pattern trigger).
     - [ ] Wifi: modem (MSS) + ath10k with the wahoo carveouts; firmware paths for mainline (qcom/msm8998/wahoo/*).
     - [ ] Display (S6E3FA5 panel driver) + touch (rmi4): console on mainline, and a real VT login.
     - [ ] Then decide: flash mainline as the default kernel (boot_a/b) or keep it on `fastboot boot`.
