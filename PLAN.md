@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: owner checks P8.1 (tap the screen: console; 5 min: dark), then P9.1 (one-command build). Also open: pick the phone's job
+## ▶ RESUME HERE: P9.1 (one-command build: build-all.sh written, first run in progress), then P9.2 (flash.sh drafted). Also open: pick the phone's job
 
 ---
 
@@ -143,7 +143,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Already seen: `/sys/class/leds/` has `red`, `green`, `blue` (RGB notification LED) next to `lcd-backlight`, torch and vibrator.
   - Investigate: brightness range, `trigger` options (`timer`/`heartbeat` for a slow blink), power cost. Ideas: dim slow blink = running, other colour = no wifi / low battery.
   - Gate: LED shows the state after a cold boot, without a login.
-- [ ] **P8.1** Screen: text console on the framebuffer (owner spec 2026-11-17):
+- [x] **P8.1** _Done 2026-11-17: owner tap → console (17:22:45 UTC); off 300 s later (log + webcam: dark, LED on)._ Screen: text console on the framebuffer (owner spec 2026-11-17):
   - Text console (fbcon + login on tty1) on the screen, large font.
   - Screen dark after **5 min** without touch; **touching the screen** wakes it and shows the console. Never a static image left lit (OLED burn-in).
   - Pieces: touch = Synaptics `synaptics_dsx_core_htc` module (`synaptics_dsxv26`, event2); kernel VT/fbcon (reset the phone in P5.0 with our own DTB; retest with the factory DTB, variant `kernel/walleye-ubuntu-vt.config`); a small daemon: touch → unblank, idle 5 min → panel off (the pixel2-headless sequence).
