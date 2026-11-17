@@ -1,0 +1,40 @@
+diff --git a/drivers/video/fbdev/msm/mdss_dsi_host.c b/drivers/video/fbdev/msm/mdss_dsi_host.c
+index 739a4272..b6266ba1 100644
+--- a/drivers/video/fbdev/msm/mdss_dsi_host.c
++++ b/drivers/video/fbdev/msm/mdss_dsi_host.c
+@@ -29,6 +29,9 @@
+ #include "mdss_debug.h"
+ #include "mdss_smmu.h"
+ #include "mdss_dsi_phy.h"
++#include "mdss_mdp.h"
++#include <linux/irq.h>
++#include <linux/irqdesc.h>
+ 
+ #define VSYNC_PERIOD 17
+ #define DMA_TX_TIMEOUT 200
+@@ -2205,6 +2208,25 @@ static int mdss_dsi_cmd_dma_tx(struct mdss_dsi_ctrl_pdata *ctrl,
+ 		u32 reg_val, status;
+ 
+ 		reg_val = MIPI_INP(ctrl->ctrl_base + 0x0110);/* DSI_INTR_CTRL */
++		{	/* IRQDBG: why did the MDSS interrupt not fire? */
++			struct mdss_data_type *md = mdss_mdp_get_mdata();
++			int irq = ctrl->dsi_hw->irq_info->irq;
++			struct irq_desc *desc = irq_to_desc(irq);
++			bool pend = 0, act = 0, msk = 0;
++
++			irq_get_irqchip_state(irq, IRQCHIP_STATE_PENDING, &pend);
++			irq_get_irqchip_state(irq, IRQCHIP_STATE_ACTIVE, &act);
++			irq_get_irqchip_state(irq, IRQCHIP_STATE_MASKED, &msk);
++			pr_err("IRQDBG dsi%d intr_ctrl=%08x irq=%d depth=%u disabled=%d gic_pend=%d gic_act=%d gic_masked=%d trig=%x mdss_top=%08x mdp_en=%08x mdp_st=%08x ena=%d mask=%x\n",
++				ctrl->ndx, reg_val, irq, desc ? desc->depth : 99,
++				irqd_irq_disabled(irq_get_irq_data(irq)), pend, act, msk,
++				irqd_get_trigger_type(irq_get_irq_data(irq)),
++				readl_relaxed(md->mdss_io.base + 0x10),
++				readl_relaxed(md->mdp_base + 0x10),
++				readl_relaxed(md->mdp_base + 0x14),
++				ctrl->dsi_hw->irq_info->irq_ena,
++				ctrl->dsi_hw->irq_info->irq_mask);
++		}
+ 		status = reg_val & DSI_INTR_CMD_DMA_DONE;
+ 		if (status) {
+ 			reg_val &= DSI_INTR_MASK_ALL;
