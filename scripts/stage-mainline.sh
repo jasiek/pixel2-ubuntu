@@ -44,8 +44,8 @@ chmod 644 \$W/*.mbn
 install -m 644 \$T/board-2.bin \$T/firmware-5.bin \$A/
 install -m 755 \$T/diag-router /usr/local/sbin/diag-router
 rm -rf \$T
-DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rmtfs tqftpserv qrtr-tools libqmi-utils >/dev/null
+DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rmtfs tqftpserv qrtr-tools >/dev/null
 systemctl daemon-reload
-systemctl enable -q diag-router.service rmtfs.service tqftpserv.service pixel2-wifi-mac.service
+systemctl enable -q diag-router.service rmtfs.service tqftpserv.service pixel2-wifi-mac.service pixel2-wifi-mac-record.service
 ls -la \$W \$A
 "'

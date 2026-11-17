@@ -1,11 +1,10 @@
-# Mainline kernel only (P8.3.6): wlan0 gets the modem-provisioned MAC
+# Mainline kernel only (P8.3.6): wlan0 gets the MAC that 4.4 recorded
 # (usr/local/sbin/pixel2-wifi-mac). Type=simple: NetworkManager waits only
-# for the "hold" step, not for the modem.
+# for the "hold" step, not for wlan0.
 [Unit]
-Description=Wifi: use the phone's provisioned MAC (mainline)
+Description=Wifi: use the phone's real MAC (mainline)
 ConditionKernelVersion=>=5
 Before=NetworkManager.service
-After=rmtfs.service
 
 [Service]
 Type=simple

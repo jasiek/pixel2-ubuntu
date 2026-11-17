@@ -1,0 +1,13 @@
+# Kernel 4.4 only (P8.3.6): save wlan0's real MAC for the mainline kernel
+# (usr/local/sbin/pixel2-wifi-mac record; /var/lib/pixel2/wlan0.mac, phone only).
+[Unit]
+Description=Wifi: record the phone's real MAC (4.4)
+ConditionKernelVersion=<5
+After=cnss-daemon.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/pixel2-wifi-mac record
+
+[Install]
+WantedBy=multi-user.target
