@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P7.3 (retry: slot is now marked successful each boot; unplug USB, power on, expect SSH over wifi)
+## ▶ RESUME HERE: P7.4 (headless tuning: backlight off, unattended-upgrades, charging)
 
 ---
 
@@ -129,7 +129,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 ## Phase 7: Make it permanent (1 h)
 - [x] **P7.1** _Done 2026-11-17 on vbmeta_a + vbmeta_b._ `fastboot --disable-verity --disable-verification flash vbmeta firmware/vbmeta.img`
 - [x] **P7.2** _Done 2026-11-17; Start in the bootloader now boots Ubuntu (SSH in ~15 s)._ `fastboot flash boot_a build/boot.img && fastboot flash boot_b build/boot.img`
-- [ ] **P7.3** Power off, then press the power button.
+- [x] **P7.3** _Done 2026-11-17: cable unplugged, power button → SSH over wifi (pixel2.local) within ~60 s of power-on, slot marked successful, NTP synced._ Power off, then press the power button.
   - Gate: SSH over wifi works without the Mac. 🎉 **Milestone 2: the phone boots into Linux.**
 - [ ] **P7.4** Headless tuning:
   - Turn the screen backlight off.
