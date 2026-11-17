@@ -5,8 +5,9 @@
  * Porthole's walleye.dts (never run on a walleye) plus: everything disabled
  * except what a headless boot needs (UFS, USB gadget, regulators, pinctrl,
  * clocks, UART, power key). Re-enable one block at a time:
- *  - mdss/gpu: the wahoo dtsi carries taimen's LG panel; walleye has a
- *    Samsung S6E3FA5 (no mainline driver).
+ *  - mdss: enabled 2026-11-17 with our S6E3FA5 panel driver
+ *    (kernel/mainline/patches/0002-*); panel + touch overrides below.
+ *  - gpu: not needed for the console.
  *  - mss/wifi: enabled 2026-11-17 (Porthole's wahoo carveouts: 120 MiB mpss,
  *    fixed MSA). Needs rmtfs, tqftpserv, diag-router + firmware in
  *    /lib/firmware/qcom/msm8998/wahoo (scripts/stage-mainline-wifi.sh).
@@ -19,6 +20,8 @@
 #include "msm8998-google-walleye.dts"
 #include "wahoo-dtbo-sink.dtsi"
 #include <dt-bindings/leds/common.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 
 / {
 	model = "Google Pixel 2 (Ubuntu, mainline first boot)";
@@ -26,7 +29,6 @@
 	qcom,msm-id = <0x124 0x20001>;
 };
 
-&mdss { status = "disabled"; };
 &adreno_gpu { status = "disabled"; };
 &remoteproc_adsp { status = "disabled"; };
 &remoteproc_slpi { status = "disabled"; };
@@ -108,6 +110,109 @@
 		led@5 {
 			reg = <5>;
 			color = <LED_COLOR_ID_RED>;
+		};
+	};
+};
+
+/*
+ * Display: Samsung S6E3FA5 1080x1920 command mode OLED. The wahoo dtsi's
+ * panel node is taimen's (LG SW43402, its own fixed LDOs, TE on gpio11,
+ * LAB/IBB rails). Walleye's vendor DT (msm8998-htc_muskie.dtsi,
+ * dsi-panel-walleye-s6e3fa5.dtsi): reset gpio94, TE gpio10, vddio = l14
+ * (1.8 V), vci = l22 (3.0 V), no LAB/IBB.
+ */
+&panel {
+	compatible = "samsung,s6e3fa5";
+	vddio-supply = <&vreg_l14a_1p88>;
+	vci-supply = <&vreg_l22a_2p85>;
+	/delete-property/ vpnl-supply;
+	/delete-property/ lab-supply;
+	/delete-property/ ibb-supply;
+	disp-te-gpios = <&tlmm 10 GPIO_ACTIVE_LOW>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&panel_reset_n &walleye_mdp_vsync>;
+};
+
+/* Vendor: vci 3.0 V (the wahoo dtsi pins l22 at taimen's 2.864 V). */
+&vreg_l22a_2p85 {
+	regulator-min-microvolt = <3000000>;
+	regulator-max-microvolt = <3000000>;
+};
+
+/*
+ * Touch: Synaptics RMI4 (vendor synaptics_dsx@20 on i2c_5 = BLSP1 QUP5),
+ * msm8998-touch-mw-common.dtsi + msm8998-touch-walleye-xd.dtsi: irq gpio125
+ * (low), reset gpio89 (active low), power switch pmi8998 GPIO2 (high = on),
+ * gpio75 = I2C mux (0 = AP, 1 = SLPI sensor hub).
+ */
+/ {
+	ts_vdd: ts-vdd-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "ts_vdd";
+		gpio = <&pmi8998_gpios 2 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		startup-delay-us = <20000>;
+	};
+};
+
+&tlmm {
+	walleye_mdp_vsync: walleye-mdp-vsync-state {
+		pins = "gpio10";
+		function = "mdp_vsync_a";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
+
+	ts_int_default: ts-int-default-state {
+		pins = "gpio125";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+	};
+
+	ts-reset-hog {
+		gpio-hog;
+		gpios = <89 GPIO_ACTIVE_LOW>;
+		output-low;		/* reset deasserted */
+		line-name = "ts-reset";
+	};
+
+	ts-i2c-mux-hog {
+		gpio-hog;
+		gpios = <75 GPIO_ACTIVE_HIGH>;
+		output-low;		/* touch I2C to the AP */
+		line-name = "ts-i2c-mux";
+	};
+};
+
+&blsp1_i2c5 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	touchscreen@20 {
+		compatible = "syna,rmi4-i2c";
+		reg = <0x20>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		interrupts-extended = <&tlmm 125 IRQ_TYPE_LEVEL_LOW>;
+		vdd-supply = <&ts_vdd>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&ts_int_default>;
+
+		syna,startup-delay-ms = <100>;
+
+		rmi4-f01@1 {
+			reg = <0x1>;
+			syna,nosleep-mode = <1>;
+		};
+
+		rmi4-f12@12 {
+			reg = <0x12>;
+			touchscreen-x-mm = <62>;
+			touchscreen-y-mm = <110>;
+			syna,sensor-type = <1>;
 		};
 	};
 };
