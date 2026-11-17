@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: pick the phone's job (add a phase for it). Optional: P8.1–P8.3
+## ▶ RESUME HERE: P9.1 (one-command build), or pick the phone's job. Optional: P8.1–P8.3
 
 ---
 
@@ -146,3 +146,21 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [ ] **P8.1** Screen: text console on the framebuffer, then a kiosk if the device's job needs a screen.
 - [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed.
 - [ ] **P8.3** Revisit a mainline kernel (msm8998 work done for the Pixel 2 XL).
+
+## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
+Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
+- [ ] **P9.1** `scripts/build-all.sh`: one entry point that runs, in order and only when outdated:
+  - `git submodule update --init` (kernel-msm, qbootctl);
+  - build container (`docker/`), `build-kernel.sh`, `build-initramfs.sh`, `build-android-stubs.sh`, `build-qbootctl.sh`;
+  - `build-bootimg.sh` (factory DTB) and `build-rootfs.sh` → `build/boot.img`, `build/rootfs.simg`.
+  - Prerequisites checked up front with clear messages: Docker running, case-sensitive volume, `adb`/`fastboot`, the factory image in `firmware/` (or download it, checking the SHA-256 from developers.google.com), and the user's SSH key.
+  - Wifi credentials asked once (or read from a gitignored file) and baked into the rootfs as an NM profile (mode 0600), so the phone is reachable without USB.
+  - Gate: on a fresh clone it produces both images with no manual steps.
+- [ ] **P9.2** `scripts/flash.sh`: an interactive guide, one step per screen, each confirmed by checking the phone's state (adb, fastboot getvar, USB IDs) before going on:
+  1. Check the phone: walleye, bootloader unlocked (or explain OEM unlocking + `fastboot flashing unlock`), on the final Android 11 firmware (else offer the factory `flash-all.sh`).
+  2. Show what will be erased (userdata) and ask for an explicit "yes".
+  3. Flash vbmeta_a/b (verification off), boot_a/b, userdata; handle the bootloader going quiet on USB after the userdata write (tell the user to pick **Start**).
+  4. Wait for the phone on USB/wifi, print the SSH command, check the LED pulse + screen off by asking the user.
+  - Also a restore path: back to stock Android (`flash-all.sh`, vbmeta with verification).
+  - Gate: someone else flashes a phone using only README + `scripts/flash.sh`.
+- [ ] **P9.3** README: replace the dev-notes flow with "build-all → flash", and keep PLAN.md/log.md as the history.
