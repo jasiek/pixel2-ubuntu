@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Pixel 2 (walleye), Ubuntu port, mainline FIRST-BOOT device tree (P8.3).
+ *
+ * Porthole's walleye.dts (never run on a walleye) plus: everything disabled
+ * except what a headless boot needs (UFS, USB gadget, regulators, pinctrl,
+ * clocks, UART, power key). Re-enable one block at a time:
+ *  - mdss/gpu: the wahoo dtsi carries taimen's LG panel; walleye has a
+ *    Samsung S6E3FA5 (no mainline driver).
+ *  - mss/wifi: taimen needed Pixel-specific modem/MSA carveouts; a bad
+ *    setup hung boots there. Untested on walleye.
+ *  - adsp/slpi: not needed headless.
+ *  - charger/fg: battery values in walleye.dts are from a spec sheet.
+ *  - blsp1_uart3: Bluetooth (needs the wifi/modem side).
+ */
+
+#include "msm8998-google-walleye.dts"
+
+/ {
+	model = "Google Pixel 2 (Ubuntu, mainline first boot)";
+};
+
+&mdss { status = "disabled"; };
+&adreno_gpu { status = "disabled"; };
+&remoteproc_mss { status = "disabled"; };
+&remoteproc_adsp { status = "disabled"; };
+&remoteproc_slpi { status = "disabled"; };
+&wifi { status = "disabled"; };
+&blsp1_uart3 { status = "disabled"; };
+&pmi8998_charger { status = "disabled"; };
+&pmi8998_fg { status = "disabled"; };
