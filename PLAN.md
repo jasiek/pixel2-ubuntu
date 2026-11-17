@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P8.4 (status LED: "phone is on" indicator). Also open: pick the phone's job
+## ▶ RESUME HERE: pick the phone's job (add a phase for it). Optional: P8.1–P8.3
 
 ---
 
@@ -139,7 +139,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Gate: SSH works after every reboot.
 
 ## Phase 8: Optional stretch (decide later)
-- [ ] **P8.4** "Phone is on" indicator with the built-in notification LED (owner request, 2026-11-17; moved first by owner). The screen is off for good (OLED burn-in), so nothing shows the phone is alive.
+- [x] **P8.4** _Done 2026-11-17: green pulse 3–20 % (never dark) from boot, dark at shutdown; `pixel2-status-led`._ "Phone is on" indicator with the built-in notification LED (owner request, 2026-11-17; moved first by owner). The screen is off for good (OLED burn-in), so nothing shows the phone is alive.
   - Already seen: `/sys/class/leds/` has `red`, `green`, `blue` (RGB notification LED) next to `lcd-backlight`, torch and vibrator.
   - Investigate: brightness range, `trigger` options (`timer`/`heartbeat` for a slow blink), power cost. Ideas: dim slow blink = running, other colour = no wifi / low battery.
   - Gate: LED shows the state after a cold boot, without a login.
