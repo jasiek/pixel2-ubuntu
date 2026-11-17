@@ -28,6 +28,7 @@ RUN chmod 600 /etc/NetworkManager/system-connections/*.nmconnection \
     && systemctl enable android-logd.service android-env.service modem.service \
         android-daemon@rmt_storage.service android-daemon@tftp_server.service \
         android-daemon@pd-mapper.service cnss-daemon.service \
+        pixel2-boot-successful.service \
     # No display, no keyboard: nothing to do on tty1.
     && systemctl mask getty@tty1.service \
     # Host keys are generated on first boot (ssh.service drop-in).

@@ -7,3 +7,6 @@
 	branch = android-msm-wahoo-4.4-android11
 	shallow = true
 	ignore = dirty
+[submodule "external/qbootctl"]
+	path = external/qbootctl
+	url = https://github.com/linux-msm/qbootctl
