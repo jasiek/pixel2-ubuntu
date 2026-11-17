@@ -151,7 +151,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - **Built (2026-11-17, see log):** `tools/pixel2-screen.c` (C, `scripts/build-screen.sh`) draws into the mmapped fb0 itself (no fbcon: mdss_fb has no fb memory until userspace mmaps). It clears the splash at boot (one black frame, then close = panel off), wakes on touch/volume, shows `pixel2-console` (status header + journal) on a pseudo-terminal through a small terminal emulator, and closes fb0 after `IDLE=300` s. Replaces pixel2-headless, whose blank-ioctl sequence broke later power-ups.
   - Verified by webcam: cold boot → dark; fake volume-key press → console; 30 s test idle → dark; wakes again. **Left for the owner:** a real finger tap, and the 5 min timeout in normal use.
   - Not done: a real tty1 login. Kernels with CONFIG_VT reset the phone very early (also without fbcon, no pstore trace); no keyboard anyway.
-- [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed.
+- [ ] **P8.2** Modem / SMS (ModemManager + qrtr) if needed. _Parked 2026-11-17: owner has no SIM card (SMS, data and calls need one)._ Found so far: modem subsystem `ONLINE` (it also runs the wifi firmware, so it stays on); the kernel has the downstream IPC router (`CONFIG_IPC_ROUTER`), not upstream QRTR, so ModemManager/libqmi can't use their QRTR path; `qmicli --device-open-qmi` on `/dev/smdcntl8` got no reply (hung). Next if picked up: QMI over the IPC router (AF_MSM_IPC sockets) or a backported QRTR.
 - [ ] **P8.3** Revisit a mainline kernel (msm8998 work done for the Pixel 2 XL).
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
