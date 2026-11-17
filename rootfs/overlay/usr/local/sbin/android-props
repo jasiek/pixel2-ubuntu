@@ -1,0 +1,86 @@
+#!/usr/bin/perl
+# Build a read-only Android property area at /dev/__properties__ so the
+# vendor (bionic) daemons we run for the modem/wifi can read properties.
+#
+#   android-props [out]        (default /dev/__properties__)
+#
+# Sources, later ones win:
+#   1. androidboot.X=Y on /proc/cmdline  ->  ro.boot.X=Y   (as Android init does)
+#   2. /etc/android/props.conf           ->  name=value lines
+#
+# Format: when /dev/__properties__ is a regular file (not a directory),
+# bionic uses its legacy "pre-split" mode: the whole file is one prop_area
+# (bionic/libc/system_properties/prop_area.cpp, Android 11):
+#   header 128 bytes: bytes_used, serial, magic 'PROP', version 0xfc6ed0ab, 28 reserved
+#   data:  prop_bt trie nodes {namelen, prop, left, right, children, name\0}
+#          and prop_info {serial = len<<24, value[92], name\0}
+#   Each dotted name segment is one level; siblings form a BST ordered by
+#   (length, bytes). Offsets are relative to the data start; 0 = none.
+# There is no property service, so setprop from a daemon simply fails.
+use strict;
+use warnings;
+
+my $out = shift // '/dev/__properties__';
+my $SIZE = 128 * 1024;
+my $HDR = 128;
+my $PROP_VALUE_MAX = 92;
+
+my %props;
+if (open(my $c, '<', '/proc/cmdline')) {
+    for (split ' ', scalar <$c>) {
+        $props{"ro.boot.$1"} = $2 if /^androidboot\.([^=]+)=(.*)$/;
+    }
+}
+if (open(my $f, '<', '/etc/android/props.conf')) {
+    while (<$f>) {
+        chomp; s/^\s+|\s+$//g;
+        next if $_ eq '' || /^#/;
+        my ($k, $v) = split /=/, $_, 2;
+        $props{$k} = $v // '';
+    }
+}
+
+my $data = "\0" x 20;                 # root prop_bt (namelen 0)
+sub alloc { my ($bytes) = @_; my $off = length $data; $bytes .= "\0" x ((4 - length($bytes) % 4) % 4); $data .= $bytes; return $off; }
+sub u32  { unpack('V', substr($data, $_[0], 4)) }
+sub setu32 { substr($data, $_[0], 4) = pack('V', $_[1]) }
+sub new_bt { my ($name) = @_; alloc(pack('VVVVV', length $name, 0, 0, 0, 0) . $name . "\0") }
+sub bt_name { substr($data, $_[0] + 20, u32($_[0])) }
+sub cmp_name { length($_[0]) <=> length($_[1]) || $_[0] cmp $_[1] }
+
+# Find or insert `seg` in the sibling BST whose root offset is stored at
+# field offset $slot (a node's `children`, `left` or `right`).
+sub find_or_add {
+    my ($slot, $seg) = @_;
+    while (1) {
+        my $cur = u32($slot);
+        if (!$cur) { my $n = new_bt($seg); setu32($slot, $n); return $n; }
+        my $c = cmp_name($seg, bt_name($cur));
+        return $cur if $c == 0;
+        $slot = $cur + ($c < 0 ? 8 : 12);           # left : right
+    }
+}
+
+for my $name (sort keys %props) {
+    my $value = $props{$name};
+    if (length $value >= $PROP_VALUE_MAX) {
+        warn "android-props: skipping $name (value too long)\n";
+        next;
+    }
+    my $node = 0;
+    $node = find_or_add($node + 16, $_) for split /\./, $name;   # children
+    my $pi = alloc(pack('V', length($value) << 24)
+                   . $value . "\0" x ($PROP_VALUE_MAX - length $value)
+                   . $name . "\0");
+    setu32($node + 4, $pi);                                         # prop
+}
+
+die "android-props: area too large\n" if $HDR + length($data) > $SIZE;
+my $hdr = pack('VVVV', length $data, 0, 0x504f5250, 0xfc6ed0ab) . "\0" x (28 * 4);
+my $tmp = "$out.tmp";
+open(my $o, '>:raw', $tmp) or die "android-props: $tmp: $!\n";
+print $o $hdr, $data, "\0" x ($SIZE - $HDR - length $data);
+close $o;
+chmod 0444, $tmp;
+rename $tmp, $out or die "android-props: $out: $!\n";
+printf "android-props: %d properties -> %s\n", scalar(keys %props), $out;
