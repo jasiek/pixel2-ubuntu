@@ -32,3 +32,7 @@
 	path = external/qcom-diag
 	url = https://github.com/linux-msm/diag
 	shallow = true
+[submodule "external/libcamera"]
+	path = external/libcamera
+	url = https://gitlab.freedesktop.org/camera/libcamera.git
+	shallow = true
