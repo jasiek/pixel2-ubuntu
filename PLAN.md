@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P8.5 camera done except `reboot bootloader` flakiness (tethered sessions only). Waiting: P9.2 gate (someone else flashes a phone). Also open: pick the phone's job
+## ▶ RESUME HERE: pick the phone's job (P8.5 camera done; long-uptime `reboot bootloader` trial pending). Waiting: P9.2 gate (someone else flashes a phone). Also open: pick the phone's job
 
 ---
 
@@ -169,7 +169,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] Baked into `scripts/build-all.sh` (MAINLINE=0 skips): modules, modem tools, ath10k board data from the factory vendor.img, boot-mainline.img; modem firmware built on the phone at boot (`pixel2-modem-fw`).
     - [x] _Flashed 2026-11-17 (owner: "flash it"): `boot_b` (active slot) = build/mainline/boot-mainline.img; boot_a still 4.4. Boots on its own and after `sudo reboot`: running in ~19 s, wifi .44. Back to 4.4: bootloader, `fastboot flash boot_b build/boot.img`._ Flash mainline as the default kernel.
 
-- [ ] **P8.5** Camera: take pictures and record video (owner request 2026-11-17).
+- [x] **P8.5** _Done 2026-11-18: build-all from the repo reproduces every hand-installed camera change (11/11 image checks, test 48)._ Camera: take pictures and record video (owner request 2026-11-17).
   - Downstream 4.4 is a dead end: its camera stack (msm camera v2) only works with Android's proprietary camera HAL.
   - Path: mainline (P8.3) CAMSS (Porthole carries msm8998 CAMSS patches) + sensor drivers + libcamera (`cam` / `libcamera-still`-style CLI, GStreamer `libcamerasrc` for video).
   - First steps: identify walleye's sensors from the downstream DT (rear/front sensor models, CSI ports, I2C addresses, regulators, MCLK); check mainline/Porthole drivers for them; check Porthole's taimen camera status.

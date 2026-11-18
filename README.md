@@ -11,6 +11,7 @@ What works:
 - pulsating green status led to indicate that it is working
 - text console on screen
 - screen blanking
+- camera
 
 What doesn't work (yet)
 - modem
@@ -18,7 +19,6 @@ What doesn't work (yet)
 
 What hasn't been tested (yet):
 - sensors
-- camera
 - microphone and speakers
 - usb ethernet
 - GPU (does this even have a GPU?)
