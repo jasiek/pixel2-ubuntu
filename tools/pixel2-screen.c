@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
 /*
+ * Licensing: this source is MIT. The built program also contains the kernel's
+ * 8x16 font (scripts/build-screen.sh), so the binary is treated as
+ * GPL-2.0-covered: ship this file and build-screen.sh with it (LICENSING.md).
+ *
  * pixel2-screen: text console on the Pixel 2 OLED, dark after IDLE seconds,
  * touch (or a volume key) wakes it.
  *
