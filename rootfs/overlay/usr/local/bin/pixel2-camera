@@ -4,8 +4,11 @@
 #   pixel2-camera video [rear|front] [seconds] [file.mp4]  (default rear, 10 s)
 #   pixel2-camera list
 # libcamera (built by scripts/build-libcamera.sh, under /usr/local) + GStreamer.
-# Photos: the first ~2 s of frames let auto-exposure settle; only the last
-# frame is kept. Video: 1280x720 H.264 (x264, CPU) in MP4.
+# Photos: frames stream until the picture has settled, and only the last one
+# is kept. The rear waits for the soft-ISP contrast autofocus to log "Scan
+# done" (~9 s: the CPU ISP runs ~5 fps at 3840x2400 and the scan takes ~45
+# frames); the front is fixed-focus and keeps frame 30 (auto-exposure).
+# Video: 1280x720 H.264 (x264, CPU) in MP4, 4:2:0 so any player decodes it.
 set -eu
 export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
 REAR=/base/soc@0/cci@ca0c000/i2c-bus@0/camera@1a
@@ -19,15 +22,26 @@ list)
 photo)
     c=$(cam_of "${2:-rear}"); out=${3:-photo-$ts.jpg}
     tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
-    gst-launch-1.0 -q libcamerasrc camera-name="$c" ! identity eos-after=30 \
+    # the leaky queue drops frames while jpegenc is busy, so encoding does
+    # not slow the stream the autofocus is measuring
+    [ "$c" = "$REAR" ] && frames=150 || frames=30
+    LIBCAMERA_LOG_LEVELS=IPASoftAf:0 gst-launch-1.0 -q libcamerasrc camera-name="$c" \
+        ! identity eos-after=$frames ! queue leaky=downstream max-size-buffers=1 \
         ! videoconvert ! jpegenc quality=92 \
-        ! multifilesink location="$tmp/f%05d.jpg" max-files=1 >/dev/null 2>&1
+        ! multifilesink location="$tmp/f%05d.jpg" max-files=1 >/dev/null 2>"$tmp/log" &
+    pid=$!
+    if [ "$c" = "$REAR" ]; then
+        until grep -q "Scan done" "$tmp/log" || ! kill -0 $pid 2>/dev/null; do sleep 0.2; done
+        sleep 1.5   # frames already in flight were taken while the lens moved
+        kill -INT $pid 2>/dev/null || true
+    fi
+    wait $pid || true
     mv "$(ls "$tmp"/f*.jpg | tail -1)" "$out"
     echo "$out" ;;
 video)
     c=$(cam_of "${2:-rear}"); secs=${3:-10}; out=${4:-video-$ts.mp4}
     gst-launch-1.0 -q -e libcamerasrc camera-name="$c" \
-        ! video/x-raw,width=1280,height=720 ! videoconvert ! queue \
+        ! video/x-raw,width=1280,height=720 ! videoconvert ! video/x-raw,format=I420 ! queue \
         ! x264enc speed-preset=ultrafast tune=zerolatency bitrate=6000 \
         ! mp4mux ! filesink location="$out" >/dev/null 2>&1 &
     pid=$!
