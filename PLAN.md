@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P8.5 camera follow-ups (rear rails switched by the driver, flash LED, laser ToF). Waiting: P9.2 gate (someone else flashes a phone). Also open: pick the phone's job
+## ▶ RESUME HERE: P8.5 camera done except `reboot bootloader` flakiness (tethered sessions only). Waiting: P9.2 gate (someone else flashes a phone). Also open: pick the phone's job
 
 ---
 
@@ -185,7 +185,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] Per-phone lens shading: `pixel2-camera-tuning` writes the Lsc grid from this phone's OTP (front at24, rear OIS flash) to /usr/local/etc/libcamera/ipa/simple.
     - [x] Flash LED + laser ToF (M6 rest, test 44): white:flash torch +133 mA; VL53L0 reads 129-131 mm (polled; IRQ pin has no live pull-up). boot_b reflashed with all of the above.
     - [x] Front colour cast (test 45): black level measured at 64 on both sensors (raw, 1-line exposure), so not that; the vendor CCM is walleye's own. Cause was grey-world AWB: front now uses Bayes AWB on the locus from walleye's own vendor 3A lib (`camera/tuning/imx179.yaml`, `tools/chromatix-awb-points.py`). White ceiling: R/G 0.953 B/G 0.930 -> 1.019 / 1.026.
-    - [ ] Needs owner: rear mirroring (printed text in view).
+    - [x] Rear mirroring (test 46, owner held a book cover): text reads left to right, sharp; not mirrored (imx362 readout unflipped is correct).
     - [ ] `reboot bootloader` sometimes boots normally: test 43/44 saw it 2 of 3 times from a tethered `fastboot boot` session, never from the flashed boot.
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
