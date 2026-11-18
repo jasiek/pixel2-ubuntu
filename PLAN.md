@@ -186,7 +186,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] Flash LED + laser ToF (M6 rest, test 44): white:flash torch +133 mA; VL53L0 reads 129-131 mm (polled; IRQ pin has no live pull-up). boot_b reflashed with all of the above.
     - [x] Front colour cast (test 45): black level measured at 64 on both sensors (raw, 1-line exposure), so not that; the vendor CCM is walleye's own. Cause was grey-world AWB: front now uses Bayes AWB on the locus from walleye's own vendor 3A lib (`camera/tuning/imx179.yaml`, `tools/chromatix-awb-points.py`). White ceiling: R/G 0.953 B/G 0.930 -> 1.019 / 1.026.
     - [x] Rear mirroring (test 46, owner held a book cover): text reads left to right, sharp; not mirrored (imx362 readout unflipped is correct).
-    - [ ] `reboot bootloader` sometimes boots normally: test 43/44 saw it 2 of 3 times from a tethered `fastboot boot` session, never from the flashed boot.
+    - [ ] `reboot bootloader` sometimes boots Ubuntu again (test 47): 3 failures in ~16 tries overall, 0 of 9 in controlled trials (flashed, after camera use, tethered). Not the IMEM magic (bootloader ignores it after mainline's cold reset). `try-boot.sh` now retries 3x. Open: long-uptime trial.
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.

@@ -19,7 +19,7 @@ in_fastboot() { [ -n "$(fastboot devices 2>/dev/null)" ]; }
 in_android()  { adb get-state 2>/dev/null | grep -q device; }
 ours_up()     { ping -c1 -t1 "$PHONE" >/dev/null 2>&1; }
 
-to_fastboot() {
+to_fastboot_once() {
     in_fastboot && return 0
     if in_android; then
         adb reboot bootloader
@@ -36,6 +36,23 @@ to_fastboot() {
     for i in $(seq 1 90); do in_fastboot && return 0; sleep 1; done
     # Fallback: we may have landed in Android.
     in_android && { adb reboot bootloader; for i in $(seq 1 60); do in_fastboot && return 0; sleep 1; done; }
+    return 1
+}
+
+# "reboot bootloader" from Ubuntu on mainline sometimes boots Ubuntu again
+# (3 of ~16 tries in tests 43-47, never reproduced on demand; see
+# docs/log.md). So when Ubuntu comes back, wait for ssh and ask again.
+to_fastboot() {
+    local try
+    for try in 1 2 3; do
+        to_fastboot_once && return 0
+        echo "not in fastboot after try $try; waiting for the phone to come back"
+        for i in $(seq 1 60); do
+            { ours_up && nc -z -G 2 "$PHONE" 22 2>/dev/null; } && break
+            in_android && break
+            sleep 2
+        done
+    done
     return 1
 }
 
