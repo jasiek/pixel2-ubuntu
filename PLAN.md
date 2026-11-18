@@ -188,6 +188,24 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] Rear mirroring (test 46, owner held a book cover): text reads left to right, sharp; not mirrored (imx362 readout unflipped is correct).
     - [ ] `reboot bootloader` sometimes boots Ubuntu again (test 47): 3 failures in ~16 tries overall, 0 of 9 in controlled trials (flashed, after camera use, tethered). Not the IMEM magic (bootloader ignores it after mainline's cold reset). `try-boot.sh` now retries 3x. Open: long-uptime trial.
 
+- [ ] **P8.6** Audio: microphones + speakers (owner request 2026-11-18). Estimate 1-3 days; the hard part is not ours alone (Porthole's taimen audio is still unresolved).
+  - Hardware (downstream `htc/msm8998-audio-muskie.dtsi`): codec WCD9340 "tavil" on SLIMbus, driven through the ADSP (q6afe/q6asm/APR); the mics hang off the codec. Speaker amps on i2c_7 (0xc1b5000): 2x NXP TFA98xx at 0x34/0x35 (reset pm8998_gpio 6/7) OR one TI TAS2557 at 0x4d -- the DT lists both, the board has one kind.
+  - Mainline/Porthole: `wcd934x` (mainline), Porthole's msm8998 machine driver (0023), TAS2557 driver (0024, ported from wahoo, needs the DSP firmware from vendor), q6afe I2S fix (0075). No mainline driver for the TFA98xx in wahoo (mainline `tfa989x` covers 9895/9897 only). Porthole taimen DT: the WCD934x MCLK (9.6 MHz via a PMIC clock) is "NOT yet resolved" (their docs/HANDOFF-audio.md).
+  - [ ] Find which amp walleye has: with the rail up, probe i2c_7 at 0x34/0x35/0x4d (read-only ID registers; no blind scan, see P8.5 M1 note).
+  - [ ] ADSP up with audio services (adsp.mbn from vendor is already loaded for other reasons? check `remoteproc`), APR/q6 devices present.
+  - [ ] Codec: WCD9340 on SLIMbus enumerates (`wcd934x` binds), MCLK solved or worked around.
+  - [ ] Sound card: walleye DT node from Porthole's taimen one; `aplay -l` / `arecord -l` list it; UCM or a plain `amixer` script for routes.
+  - [ ] Speaker: amp driver (TAS2557 from Porthole, or port TFA98xx from wahoo if that is the fitted part) + its firmware from vendor.img.
+  - Gate: `arecord` 5 s from the bottom mic and `aplay` it back on the speaker; copy the WAV to the Mac and it is clearly audible.
+
+- [ ] **P8.7** GPU: Adreno 540 with the open driver (owner request 2026-11-18). Estimate 2-4 h if Porthole's wahoo GPU setup carries over.
+  - State: our walleye DT has `&adreno_gpu { status = "disabled"; }` (console did not need it). Porthole's shared wahoo DT (0027) already enables it with a zap-shader memory region, and a5xx fixes (0005, 0030-0034, 0067); taimen runs GTK/Chromium on it.
+  - [ ] Firmware: a530_pm4.fw + a530_pfp.fw + a540_gpmu.fw2 (linux-firmware), a540_zap (from vendor.img, squashed like the modem firmware) -- added to `build-mainline-fw.sh`.
+  - [ ] Drop the disable, boot: `msm_dpu`/`adreno` probe, /dev/dri/renderD128, no GPU hangs in dmesg.
+  - [ ] Userspace: Ubuntu 24.04 Mesa (freedreno, OpenGL ES 3.x; no Vulkan on a5xx). Check with `kmscube` or `eglinfo` on the render node.
+  - [ ] Power: GPU idles at its lowest OPP when unused (USB input current A/B like P8.5).
+  - Gate: an OpenGL ES test renders on the GPU (renderer string "FD540"), not llvmpipe.
+
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
 - [x] **P9.1** _Done 2026-11-17: fresh clone → both images, no manual steps, 11.5 min (kernel 6.5 min); rerun = all steps "up to date"; plus `scripts/get-firmware.sh`._ `scripts/build-all.sh`: one entry point that runs, in order and only when outdated:
