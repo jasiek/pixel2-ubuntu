@@ -201,10 +201,10 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 
 - [ ] **P8.7** GPU: Adreno 540 with the open driver (owner request 2026-11-18). Estimate 2-4 h if Porthole's wahoo GPU setup carries over.
   - State: our walleye DT has `&adreno_gpu { status = "disabled"; }` (console did not need it). Porthole's shared wahoo DT (0027) already enables it with a zap-shader memory region, and a5xx fixes (0005, 0030-0034, 0067); taimen runs GTK/Chromium on it.
-  - [ ] Firmware: a530_pm4.fw + a530_pfp.fw + a540_gpmu.fw2 (linux-firmware), a540_zap (from vendor.img, squashed like the modem firmware) -- added to `build-mainline-fw.sh`.
-  - [ ] Drop the disable, boot: `msm_dpu`/`adreno` probe, /dev/dri/renderD128, no GPU hangs in dmesg.
-  - [ ] Userspace: Ubuntu 24.04 Mesa (freedreno, OpenGL ES 3.x; no Vulkan on a5xx). Check with `kmscube` or `eglinfo` on the render node.
-  - [ ] Power: GPU idles at its lowest OPP when unused (USB input current A/B like P8.5).
+  - [x] Firmware: all four from this phone's vendor partition via pixel2-modem-fw (a530_pm4/pfp, a540_gpmu.fw2 -- not in any linux-firmware -- and a540_zap squashed).
+  - [x] Drop the disable, boot (test 49, tethered): adreno binds, microcode loads, /dev/dri/renderD128, no GPU hangs.
+  - [x] Userspace: Mesa 25.2 (noble-updates) freedreno: eglinfo GBM renderer "FD540"; kmscube 120 frames in 1.92 s (60 Hz vsync). `kmscube -A` stalls on this command-mode panel (not the GPU).
+  - [x] Power: runtime-suspended when idle (active 1.2 s of 119 s after kmscube).
   - Gate: an OpenGL ES test renders on the GPU (renderer string "FD540"), not llvmpipe.
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
