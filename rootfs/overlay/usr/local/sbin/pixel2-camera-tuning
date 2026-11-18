@@ -1,0 +1,116 @@
+#!/usr/bin/python3 -I
+"""Per-phone lens-shading tables for the soft-ISP (P8.5).
+
+The shipped tuning files (imx179.yaml, imx362.yaml from Porthole) carry the
+lens-shading grid of ONE taimen's camera modules; their own comment says a
+different unit wants its own grid. Every Pixel 2 module stores its grid in
+OTP, so read it here and write an override that libcamera prefers
+(/usr/local/etc/libcamera/ipa is searched before /usr/local/share/...).
+
+OTP layout (same for both modules; front: at24 EEPROM at CCI1 0x51, rear: the
+OIS flash calibration area, exposed by lc898123f40 as nvmem): from byte 110,
+four planes R, Gr, Gb, B of 17x13 big-endian 16-bit values, the measured
+response with 1023 at the centre. The tuning wants the reciprocal (1.0 =
+leave alone), Gr and Gb averaged -- what Porthole's otp-to-lsc.py made.
+Neither driver flips the readout (imx362 never writes 0x0101, imx179 writes
+0), so the grid applies unflipped.
+
+Runs at boot (pixel2-camera-tuning.service); rewrites only when the OTP
+changed. Exits 0 when a camera is missing so boot is never held up.
+"""
+import glob
+import hashlib
+import os
+import sys
+import time
+
+SHARE = "/usr/local/share/libcamera/ipa/simple"
+ETC = "/usr/local/etc/libcamera/ipa/simple"
+CAMERAS = (("imx179", "/sys/bus/nvmem/devices/*-0051*/nvmem"),   # front
+           ("imx362", "/sys/bus/nvmem/devices/*-003e*/nvmem"))   # rear
+OFF, W, H = 110, 17, 13
+
+
+def find(pattern, wait):
+    end = time.monotonic() + wait
+    while True:
+        hits = glob.glob(pattern)
+        if hits or time.monotonic() > end:
+            return hits[0] if hits else None
+        time.sleep(1)
+
+
+def planes(blob):
+    n = W * H
+    out = []
+    for k in range(4):
+        base = OFF + k * 2 * n
+        p = [int.from_bytes(blob[base + 2 * i:base + 2 * i + 2], "big")
+             for i in range(n)]
+        if not all(1 <= v <= 1023 for v in p) or p[n // 2] != 1023:
+            raise ValueError("plane %d does not look like a shading grid" % k)
+        out.append(p)
+    return out
+
+
+def lsc_block(sensor, src, sha, p):
+    r = [1023 / v for v in p[0]]
+    g = [2046 / (a + b) for a, b in zip(p[1], p[2])]
+    b = [1023 / v for v in p[3]]
+
+    def grid(name, vals):
+        rows = [", ".join("%.4f" % v for v in vals[y * W:(y + 1) * W])
+                for y in range(H)]
+        return ("      %s:\n        [ " % name
+                + ",\n          ".join(rows) + " ]\n")
+
+    return ("  - Lsc:\n"
+            "      # Lens shading from THIS phone's %s OTP (%s, sha256 %s),\n"
+            "      # written by pixel2-camera-tuning: the reciprocal of the\n"
+            "      # measured response, Gr/Gb averaged.\n"
+            "      grid: [ %d, %d ]\n" % (sensor, src, sha, W, H)
+            + grid("r", r) + grid("g", g) + grid("b", b))
+
+
+def splice(text, block):
+    lines = text.splitlines(keepends=True)
+    try:
+        start = next(i for i, l in enumerate(lines) if l.rstrip() == "  - Lsc:")
+    except StopIteration:
+        raise ValueError("no Lsc section in the shipped tuning file")
+    end = next((i for i in range(start + 1, len(lines))
+                if lines[i].startswith("  - ") or lines[i].startswith("...")),
+               len(lines))
+    return "".join(lines[:start]) + block + "".join(lines[end:])
+
+
+def main():
+    os.makedirs(ETC, exist_ok=True)
+    for sensor, pattern in CAMERAS:
+        src = find(pattern, 60)
+        dst = os.path.join(ETC, sensor + ".yaml")
+        if not src:
+            print("%s: no OTP found (%s), keeping the shipped tuning" % (sensor, pattern))
+            continue
+        try:
+            with open(src, "rb") as f:
+                blob = f.read()
+            sha = hashlib.sha256(blob).hexdigest()[:16]
+            if os.path.exists(dst) and sha in open(dst).read():
+                print("%s: up to date (%s)" % (sensor, sha))
+                continue
+            block = lsc_block(sensor, os.path.dirname(src), sha, planes(blob))
+            with open(os.path.join(SHARE, sensor + ".yaml")) as f:
+                text = splice(f.read(), block)
+        except (OSError, ValueError) as e:
+            print("%s: %s, keeping the shipped tuning" % (sensor, e))
+            continue
+        with open(dst + ".tmp", "w") as f:
+            f.write(text)
+        os.replace(dst + ".tmp", dst)
+        print("%s: wrote %s from %s (%s)" % (sensor, dst, src, sha))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,14 @@
+[Unit]
+Description=Pixel 2 camera lens-shading tables from this phone's OTP (P8.5)
+# The OTP appears as nvmem once at24 (front) and lc898123f40 (rear) bind;
+# the script waits up to 60 s for each and never fails the boot.
+After=systemd-udev-settle.service systemd-modules-load.service
+# Cameras exist only on the mainline kernel.
+ConditionKernelVersion=>=5
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/pixel2-camera-tuning
+
+[Install]
+WantedBy=multi-user.target
