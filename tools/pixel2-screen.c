@@ -5,7 +5,7 @@
  * GPL-2.0-covered: ship this file and build-screen.sh with it (LICENSING.md).
  *
  * pixel2-screen: text console on the Pixel 2 OLED, dark after IDLE seconds,
- * touch (or a volume key) wakes it.
+ * touch, a volume key or a short power-key press wakes it.
  *
  * Drawing: mdss_fb only has framebuffer memory while a process has /dev/fb0
  * mmapped (allocated on mmap, freed on release), so the kernel's fbcon can't
@@ -62,7 +62,10 @@
 #define MAXC     160
 #define DEF_ATTR 0x07 /* light grey on black */
 
-static const char *input_names[] = { "synaptics_dsxv26", "gpio-keys", "Synaptics S3708AR" };
+/* Touch, volume keys (4.4: gpio-keys) and the power key (mainline: pm8941_pwrkey;
+ * 4.4: qpnp_pon). logind ignores a short power press, so it only wakes the screen. */
+static const char *input_names[] = { "synaptics_dsxv26", "gpio-keys", "Synaptics S3708AR",
+				      "pm8941_pwrkey", "qpnp_pon" };
 
 /* VGA palette (R, G, B) for the 16 console colours. */
 static const uint8_t pal[16][3] = {
