@@ -29,18 +29,25 @@ The Pixel 2 (walleye) boots straight into plain, headless Ubuntu 24.04 arm64, re
 
 ## Install
 
-You need: an Apple Silicon Mac with Docker running, `adb` + `fastboot` (`brew install android-platform-tools`), a **case-sensitive** volume for the clone (the kernel needs one; Disk Utility → APFS (Case-sensitive)), and a Pixel 2 whose bootloader can be unlocked (not Verizon).
+You need: an Apple Silicon Mac with Docker running, `adb` + `fastboot` (`brew install android-platform-tools`), a **case-sensitive** volume for the clone (the kernel source has files whose names differ only in case; step 1 makes one), and a Pixel 2 whose bootloader can be unlocked (not Verizon).
 
-1. Clone onto the case-sensitive volume (replace `Pixel2Dev` with yours):
+1. Create a case-sensitive volume. It's a new APFS volume in your existing disk's container: it shares free space, so nothing needs partitioning or resizing.
+   ```sh
+   diskutil info / | grep 'APFS Container'   # e.g. "APFS Container: disk3"
+   diskutil apfs addVolume disk3 'Case-sensitive APFS' Pixel2Dev   # use your container
+   diskutil info /Volumes/Pixel2Dev | grep Personality   # must say "Case-sensitive APFS"
+   ```
+   It mounts at `/Volumes/Pixel2Dev` and stays mounted across reboots. (GUI: Disk Utility → select the container → **+** → Format "APFS (Case-sensitive)".) A full build needs about 60 GB free.
+2. Clone onto it:
    ```sh
    cd /Volumes/Pixel2Dev
    git clone https://github.com/jasiek/pixel2-ubuntu
    cd pixel2-ubuntu
    ```
    No `--recurse-submodules` needed: the build fetches the submodules as shallow clones.
-2. Build: `scripts/build-all.sh`. It fetches the sources and Google's factory image (1.7 GB, SHA-256 checked), asks once for wifi details, and builds `build/boot.img` + `build/rootfs.simg`. The first run takes the longest (the kernel); later runs rebuild only what changed.
-3. Flash: `scripts/flash.sh`. It walks you through it step by step and checks the phone before each step. It **erases the phone** and asks for `yes` first. The active slot gets the mainline 7.2.2 kernel, the other slot keeps 4.4 as a fallback (`KERNEL=4.4 scripts/flash.sh` for 4.4 on both).
-4. Log in: `scripts/ssh.sh` (over USB; `PIXEL2_HOST=pixel2.local scripts/ssh.sh` over wifi). Your `~/.ssh/*.pub` keys are installed for the user `ubuntu`.
+3. Build: `scripts/build-all.sh`. It fetches the sources and Google's factory image (1.7 GB, SHA-256 checked), asks once for wifi details, and builds `build/boot.img` + `build/rootfs.simg`. The first run takes the longest (the kernel); later runs rebuild only what changed.
+4. Flash: `scripts/flash.sh`. It walks you through it step by step and checks the phone before each step. It **erases the phone** and asks for `yes` first. The active slot gets the mainline 7.2.2 kernel, the other slot keeps 4.4 as a fallback (`KERNEL=4.4 scripts/flash.sh` for 4.4 on both).
+5. Log in: `scripts/ssh.sh` (over USB; `PIXEL2_HOST=pixel2.local scripts/ssh.sh` over wifi). Your `~/.ssh/*.pub` keys are installed for the user `ubuntu`.
 
 **Back to stock Android:** `scripts/flash.sh restore` (runs Google's `flash-all.sh`; erases the phone).
 
