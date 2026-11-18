@@ -32,7 +32,10 @@ if [ ! -f /.dockerenv ]; then
     scripts/build-screen.sh
     mkdir -p build/ssh
     [ -f build/ssh/pixel2_ed25519 ] || ssh-keygen -q -t ed25519 -N "" -C pixel2-port-automation -f build/ssh/pixel2_ed25519
-    cat ~/.ssh/*.pub build/ssh/pixel2_ed25519.pub 2>/dev/null | sort -u > build/ssh/authorized_keys
+    # A host without ~/.ssh/*.pub is fine (the project key still goes in);
+    # without the `|| true`, cat's failure on the unmatched glob kills the
+    # build silently under pipefail.
+    { cat ~/.ssh/*.pub 2>/dev/null || true; cat build/ssh/pixel2_ed25519.pub; } | sort -u > build/ssh/authorized_keys
 
     docker build --platform linux/arm64 -t pixel2-rootfs rootfs/
     cid=$(docker create --platform linux/arm64 pixel2-rootfs)
