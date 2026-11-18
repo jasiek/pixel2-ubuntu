@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         iproute2 iputils-ping netbase ca-certificates curl \
         network-manager dnsmasq-base wpasupplicant iw rfkill wireless-regdb \
         avahi-daemon libnss-mdns \
-        e2fsprogs nano less htop usbutils \
+        e2fsprogs nano less htop usbutils file \
         unattended-upgrades \
         rmtfs tqftpserv qrtr-tools \
         libyaml-0-2 libevent-2.1-7t64 libevent-pthreads-2.1-7t64 libyuv0 libtiff6 libdw1t64 libunwind8 \
