@@ -81,7 +81,11 @@ if [ "${1:-}" = ours ]; then
     exit 0
 fi
 
-MAKE=(make -C "$SRC" O="$OUT" ARCH=arm64 LLVM=-18 -j"$(nproc)"
+# ccache in build/ccache/mainline (build-kernel.sh has its own): a recopied
+# tree (new patches) or a config change recompiles only what really changed.
+export CCACHE_DIR=/work/build/ccache/mainline CCACHE_MAXSIZE=5G
+ccache -z >/dev/null
+MAKE=(make -C "$SRC" O="$OUT" ARCH=arm64 LLVM=-18 CC="ccache clang-18" -j"$(nproc)"
       KBUILD_BUILD_USER=pixel2 KBUILD_BUILD_HOST=ubuntu-port)
 
 # Our first-boot DTS next to Porthole's walleye.dts.
@@ -111,3 +115,4 @@ rm -rf /work/build/mainline/modules-install
 "${MAKE[@]}" INSTALL_MOD_PATH=/work/build/mainline/modules-install INSTALL_MOD_STRIP=1 modules_install >/dev/null
 ls -la "$OUT/arch/arm64/boot/Image.gz" "$OUT/arch/arm64/boot/dts/qcom/$DTS.dtb"
 cat "$OUT/include/config/kernel.release"
+ccache -s

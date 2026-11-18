@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential bc bison flex libssl-dev libelf-dev \
         lz4 gzip cpio kmod git ca-certificates file \
         python3 device-tree-compiler \
-        clang-18 lld-18 llvm-18 \
+        clang-18 lld-18 llvm-18 ccache \
         libqrtr-dev libudev-dev \
     && rm -rf /var/lib/apt/lists/*
 

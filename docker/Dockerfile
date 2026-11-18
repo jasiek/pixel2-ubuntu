@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential bc bison flex libssl-dev libelf-dev \
-        clang-11 lld-11 llvm-11 \
+        clang-11 lld-11 llvm-11 ccache \
         gcc-arm-linux-gnueabi \
         lz4 cpio kmod git ca-certificates curl wget xz-utils file \
         python2 python3 \

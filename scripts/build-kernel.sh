@@ -38,11 +38,17 @@ else
     done
 fi
 
+# ccache in build/ccache/4.4, not shared: ccache 3.7 here, 4.x in the mainline
+# image, and their cache layouts differ. A wiped $OUT or a config change
+# recompiles only the files whose preprocessed source changed.
+export CCACHE_DIR=/work/build/ccache/4.4 CCACHE_MAXSIZE=5G
+ccache -z >/dev/null
+
 # Same toolchain family as Google's build.config.common.clang (clang 11),
 # but with native arm64 binutils instead of Android's x86 prebuilts.
 MAKE=(make -C "$SRC" O="$OUT" -j"$JOBS"
       ARCH=arm64 LOCALVERSION=
-      CC=clang CLANG_TRIPLE=aarch64-linux-gnu-
+      CC="ccache clang" CLANG_TRIPLE=aarch64-linux-gnu-
       CROSS_COMPILE=aarch64-linux-gnu-
       CROSS_COMPILE_ARM32=arm-linux-gnueabi-)
 
@@ -78,4 +84,5 @@ if [ "${STOCK:-0}" != 1 ]; then
     find "$OUT/modules-install" -name "*.ko" | sed "s|$OUT/modules-install/||"
 fi
 ls -la "$OUT/arch/arm64/boot/Image.lz4-dtb"
+ccache -s
 strings "$OUT/vmlinux" | grep -m1 "^Linux version" || true  # -m1 closes the pipe early (SIGPIPE)
