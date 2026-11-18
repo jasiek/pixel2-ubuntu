@@ -3,7 +3,8 @@
 The Pixel 2 (walleye) boots straight into plain, headless Ubuntu 24.04 arm64, reachable over SSH (USB and wifi). It is meant as a dedicated device.
 
 <human>
-What works:
+
+#### What works:
 - ssh over USB
 - ssh over WiFi
 - modem firmware
@@ -15,14 +16,15 @@ What works:
 - microphone and speakers
 - GPU
 
-What doesn't work (yet)
+#### What doesn't work (yet)
 - modem
 - mouse pointer via LCD touch
 
-What hasn't been tested (yet):
+#### What hasn't been tested (yet):
 - sensors (pressure, accelerometer, etc)
 - usb ethernet
 - x/wayland
+
 </human>
 
 ## Install
