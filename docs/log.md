@@ -192,3 +192,9 @@ Newest entries at the bottom. One dated line per event: what happened, errors, d
   - Side finding: `reboot bootloader` twice came back as a normal boot (after test 38; then from the flashed kernel); `systemctl reboot --reboot-argument=bootloader` worked every time since. Not understood yet.
   - Kernel WARN at boot: `pclk0_clk_src: rcg didn't update its configuration` (panel module load); display works.
 - P8.5 tests 42+: `pixel2-camera photo front` → 3200x2400 JPEG in 10.7 s (dark room, ceiling clock "2337" readable, colours right); `pixel2-camera video front 8` → 7.3 s 1280x720 H.264 MP4 (all gain noise in the dark). Test 42: build-all image with no blacklist brings up both cameras at boot. systemd-backlight made a no-op (EINVAL: panel off at boot). boot_b reflashed with the camera build; normal boot: running, 2 cameras, panel off.
+
+## 2026-11-18 — P8.5 lit-scene check
+- Rear photo was blurry: taken at frame 30 while the soft-ISP contrast AF (Porthole 0065) was still scanning. CPU ISP at 3840x2400 runs ~5 fps; the scan locks ~45 frames / ~9 s in. `pixel2-camera photo rear` now waits for the AF "Scan done" log line + 1.5 s (~17 s total) → sharp, well exposed.
+- Video did not play on the Mac: videoconvert fed x264 Y444 → High 4:4:4 (SPS profile_idc 0xf4). Forcing I420 → Constrained Baseline, decodes in AVFoundation.
+- Mirroring: front not mirrored (projected ceiling clock reads 23:37). Rear not proven (no readable text in frame).
+- Rotation: vendor camera_config.xml says BACK 90 / FRONT 270; DT has 270/270. Known-pose shots (phone upright): selfie needs 90 deg CCW (=270), rear desk scene needs 90 deg CCW too (=270) — the mainline imx362 readout is 180 off the vendor's, as on taimen. `pixel2-camera` now rotates to portrait (videoflip); video drops 16 → 11.5 fps from the CPU rotation.

@@ -631,9 +631,11 @@
 
 		orientation = <1>;
 		/*
-		 * UNCONFIRMED. Vendor mount angle 90 (DTBO:4485,
-		 * camera_config.xml:100) vs 270 on taimen (TCAM:155), where
-		 * mainline uses 90 (TDTS:1168-1169). Rotated 180 deg -> 270.
+		 * Vendor mount angle 90 (DTBO:4485, camera_config.xml:100) vs
+		 * 270 on taimen (TCAM:155), where mainline uses 90 (TDTS:1168-
+		 * 1169), so rotated 180 deg -> 270. CONFIRMED 2026-11-18: with
+		 * the phone upright the frame needs 90 deg counter-clockwise
+		 * (desk and letter trays upright), as for the front (270).
 		 */
 		rotation = <270>;
 
