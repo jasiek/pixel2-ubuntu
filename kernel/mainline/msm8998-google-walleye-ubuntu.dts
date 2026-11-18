@@ -7,7 +7,9 @@
  * clocks, UART, power key). Re-enable one block at a time:
  *  - mdss: enabled 2026-11-17 with our S6E3FA5 panel driver
  *    (kernel/mainline/patches/0002-*); panel + touch overrides below.
- *  - gpu: not needed for the console.
+ *  - gpu: enabled 2026-11-18 (P8.7) as Porthole's wahoo DT sets it up
+ *    (pm8005_s1 core rail, zap shader); microcode from linux-firmware,
+ *    zap squashed on the phone by pixel2-modem-fw.
  *  - mss/wifi: enabled 2026-11-17 (Porthole's wahoo carveouts: 120 MiB mpss,
  *    fixed MSA). Needs rmtfs, tqftpserv, diag-router + firmware in
  *    /lib/firmware/qcom/msm8998/wahoo (scripts/stage-mainline-wifi.sh).
@@ -29,7 +31,6 @@
 	qcom,msm-id = <0x124 0x20001>;
 };
 
-&adreno_gpu { status = "disabled"; };
 &remoteproc_adsp { status = "disabled"; };
 &remoteproc_slpi { status = "disabled"; };
 &blsp1_uart3 { status = "disabled"; };

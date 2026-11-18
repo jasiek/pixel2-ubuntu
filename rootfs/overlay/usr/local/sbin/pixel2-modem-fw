@@ -5,7 +5,10 @@
 #
 #   /lib/firmware/qcom/msm8998/wahoo/  mba.mbn, modem.mbn (squashed),
 #       modemr.jsn (modem partition), modemuw.jsn, wlanmdsp.mbn,
-#       ipa_fws.mbn (squashed) (vendor partition)
+#       ipa_fws.mbn (squashed), a540_zap.mbn (squashed; GPU, P8.7)
+#       (vendor partition)
+#   /lib/firmware/qcom/  a530_pm4.fw, a530_pfp.fw, a540_gpmu.fw2 (vendor
+#       partition; GPU microcode -- linux-firmware has no a540_gpmu.fw2)
 # The ath10k board data (board-2.bin, firmware-5.bin) is baked into the
 # rootfs by scripts/build-rootfs.sh.
 set -eu
@@ -29,8 +32,8 @@ V=/vendor/firmware
 [ -f $V/wlanmdsp.mbn ] || { echo "no $V (vendor.service)"; exit 1; }
 
 # Same source files as last time: nothing to do.
-src=$(cat $M/modem.mdt $M/mba.mbn $V/wlanmdsp.mbn $V/ipa_fws.mdt | sha256sum | cut -c1-16)
-if [ "$(cat $STAMP 2>/dev/null)" = "$src" ] && [ -f $W/modem.mbn ]; then
+src=$(cat $M/modem.mdt $M/mba.mbn $V/wlanmdsp.mbn $V/ipa_fws.mdt $V/a540_zap.mdt $V/a530_pm4.fw $V/a530_pfp.fw $V/a540_gpmu.fw2 | sha256sum | cut -c1-16)
+if [ "$(cat $STAMP 2>/dev/null)" = "$src" ] && [ -f $W/modem.mbn ] && [ -f $W/a540_zap.mbn ] && [ -f /lib/firmware/qcom/a540_gpmu.fw2 ]; then
     echo "firmware up to date ($src)"
     exit 0
 fi
@@ -39,6 +42,8 @@ install -m 644 $M/mba.mbn $M/modemr.jsn $W/
 install -m 644 $V/modemuw.jsn $V/wlanmdsp.mbn $W/
 pil-squasher $W/modem.mbn $M/modem.mdt
 pil-squasher $W/ipa_fws.mbn $V/ipa_fws.mdt
+pil-squasher $W/a540_zap.mbn $V/a540_zap.mdt
+install -m 644 $V/a530_pm4.fw $V/a530_pfp.fw $V/a540_gpmu.fw2 /lib/firmware/qcom/
 chmod 644 $W/*.mbn
 echo "$src" > $STAMP
 echo "firmware built from modem$suffix + vendor ($src)"
