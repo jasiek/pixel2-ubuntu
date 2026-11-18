@@ -53,7 +53,9 @@ MAINLINE=${MAINLINE:-1}
 SUBS=(external/kernel-msm external/mkbootimg external/qbootctl)
 [ "$MAINLINE" = 0 ] || SUBS+=(external/linux-mainline external/porthole-pmaports \
     external/pil-squasher external/qcom-diag external/qca-swiss-army-knife external/libcamera)
-if git submodule status "${SUBS[@]}" | grep -q '^-'; then
+# grep without -q: -q exits at the first match, git then dies of SIGPIPE and
+# pipefail makes the test false exactly when a submodule is missing.
+if git submodule status "${SUBS[@]}" | grep '^-' >/dev/null; then
     echo "Fetching submodules (the kernel is a shallow clone, a few hundred MB)."
     git submodule update --init "${SUBS[@]}"
 fi
