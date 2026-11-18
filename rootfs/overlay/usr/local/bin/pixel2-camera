@@ -18,12 +18,22 @@ export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
 REAR=/base/soc@0/cci@ca0c000/i2c-bus@0/camera@1a
 FRONT=/base/soc@0/cci@ca0c000/i2c-bus@1/camera@10
 ts=$(date +%Y%m%d-%H%M%S)
-# Photos turn the pixels (videoflip). Videos only carry the turn in the MP4
-# track header matrix, because turning every 720p frame on the CPU cut the
-# frame rate from 16 to 11.5 fps; players apply the matrix. mp4mux 1.24
-# ignores the image-orientation tag, so the matrix is written afterwards.
-if [ "${PIXEL2_CAMERA_ROTATE:-1}" = 0 ]; then flip=identity rot=0
-else flip="videoflip method=counterclockwise" rot=1; fi
+# Neither photos nor videos have their pixels turned: rotating on the CPU is
+# too slow next to the soft-ISP (a 9 MP videoflip took >10 s per frame, so
+# only the first, still-black frame was ever encoded; 720p video lost a
+# quarter of its frame rate). Like phone cameras, the files carry the turn
+# instead: EXIF Orientation 8 in the JPEG, the track matrix in the MP4 (mp4mux
+# 1.24 ignores the image-orientation tag, so both are written afterwards).
+if [ "${PIXEL2_CAMERA_ROTATE:-1}" = 0 ]; then rot=0; else rot=1; fi
+
+# Put an EXIF APP1 with Orientation = 8 ("turn 90 degrees counter-clockwise
+# to view") straight after the JPEG's SOI. 34-byte segment: "Exif\0\0", a
+# big-endian TIFF header, IFD0 with the one entry 0x0112 SHORT 1 = 8.
+jpeg_rotate_ccw() {
+    { head -c 2 "$1"
+      printf '\377\341\000\042Exif\000\000MM\000\052\000\000\000\010\000\001\001\022\000\003\000\000\000\001\000\010\000\000\000\000\000\000'
+      tail -c +3 "$1"; } > "$1.tmp" && mv "$1.tmp" "$1"
+}
 
 # Set the tkhd matrix of a 1280-wide single-track MP4 to "rotate 90 degrees
 # counter-clockwise": (x,y) -> (y, 1280-x), i.e. a=0 b=-1 c=1 d=0 ty=1280.
@@ -50,7 +60,7 @@ photo)
     [ "$c" = "$REAR" ] && frames=150 || frames=30
     LIBCAMERA_LOG_LEVELS=IPASoftAf:0 gst-launch-1.0 -q libcamerasrc camera-name="$c" \
         ! identity eos-after=$frames ! queue leaky=downstream max-size-buffers=1 \
-        ! videoconvert ! $flip ! jpegenc quality=92 \
+        ! videoconvert ! jpegenc quality=92 \
         ! multifilesink location="$tmp/f%05d.jpg" max-files=1 >/dev/null 2>"$tmp/log" &
     pid=$!
     if [ "$c" = "$REAR" ]; then
@@ -60,6 +70,7 @@ photo)
     fi
     wait $pid || true
     mv "$(ls "$tmp"/f*.jpg | tail -1)" "$out"
+    [ "$rot" = 1 ] && jpeg_rotate_ccw "$out"
     echo "$out" ;;
 video)
     c=$(cam_of "${2:-rear}"); secs=${3:-10}; out=${4:-video-$ts.mp4}

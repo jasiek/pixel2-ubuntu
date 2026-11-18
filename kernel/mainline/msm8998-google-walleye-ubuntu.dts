@@ -679,7 +679,7 @@
 
 	/* VEND libois_lc898123f40.so @0x43c: 0x7C -> 0x3e. Also holds the
 	 * rear calibration (VEND libmmcamera_sony_imx362_eeprom.so @0x3a78). */
-	ois@3e {
+	ois: ois@3e {
 		compatible = "onnn,lc898123f40";
 		reg = <0x3e>;
 		vdd-supply = <&vreg_lvs1a_1p8>;
@@ -689,18 +689,15 @@
 
 &imx362 {
 	lens-focus = <&af_lens>;
+	/* runtime-PM link: the OIS is powered (and stabilises) only while
+	 * the sensor is, patch 0004 */
+	google,ois = <&ois>;
 };
 
 /*
- * Rear rails stay on: with them switched by the imx362 driver the sensor never
- * answers its chip-ID read (-110, tests 39/40); with them on from boot it
- * probes, the OIS answers (firmware 0x19) and frames stream (test 41).
- * Unknown which rail/timing the module needs (taimen's driver comment says the
- * OIS only answers once the IMX362 rails are up). Follow-up: find it and let
- * the driver switch them again (idle power).
+ * Rear rails are switched by the imx362 driver (runtime PM), off when the
+ * camera is idle. They used to be always-on (tests 39-41): the first chip-ID
+ * read after they rise timed out early in boot; patch 0004 retries it, and
+ * powers the OIS only while streaming (test 43: rails + OIS on cost +15-20 mA
+ * USB input current, ~80 mW, A/B in one boot).
  */
-&cam0_dvdd { regulator-always-on; regulator-boot-on; };
-&cam0_avdd { regulator-always-on; regulator-boot-on; };
-&cam0_avdd2 { regulator-always-on; regulator-boot-on; };
-&cam0_drv { regulator-always-on; regulator-boot-on; };
-&cam0_vaf { regulator-always-on; regulator-boot-on; };

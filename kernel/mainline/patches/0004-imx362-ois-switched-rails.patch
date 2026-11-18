@@ -1,0 +1,369 @@
+From: pixel2 ubuntu port
+Subject: [PATCH] media: imx362, lc898123f40: let the rear rails switch (walleye)
+
+Walleye's rear rails had to stay always-on: switched by imx362 the
+chip-ID read timed out at probe (-110). Test 43: the first CCI transfer
+after the rails rise times out early in boot, the CCI resets itself on
+the timeout, and the next transfer answers. imx362_power_on() now reads
+the chip ID until it answers (3 tries).
+
+The OIS answers only while the sensor's rails are up, and used to hold
+its own two rails plus stabilisation forever (+15-20 mA USB input current,
+~80 mW, A/B in one boot). It now uses runtime PM: imx362 names it (google,ois) and
+links it as a runtime-PM consumer, so waking the OIS (its probe, an
+nvmem read, imx362 stream-on) powers the sensor first, and both drop
+their rails when the stream stops.
+
+---
+--- a/drivers/media/i2c/imx362.c
++++ b/drivers/media/i2c/imx362.c
+@@ -17,6 +17,7 @@
+ #include <linux/i2c.h>
+ #include <linux/math64.h>
+ #include <linux/module.h>
++#include <linux/of.h>
+ #include <linux/pm_runtime.h>
+ #include <linux/regulator/consumer.h>
+ #include <linux/easel-mipi.h>
+@@ -475,6 +476,10 @@
+ 
+ 	struct device *cci_dev;
+ 
++	/* optional OIS controller powered from our rails (google,ois) */
++	struct i2c_client *ois;
++	bool ois_on;
++
+ 	struct v4l2_ctrl *pixel_rate;
+ 	struct v4l2_ctrl *link_freq;
+ 	struct v4l2_ctrl *exposure;
+@@ -599,7 +604,25 @@
+ 
+ 	/* Vendor delay on the CLK step. */
+ 	usleep_range(9000, 10000);
++
++	/*
++	 * Walleye, rails switched here (not always-on): early in boot the
++	 * first CCI transfer after they come up times out; the CCI resets
++	 * itself on the timeout and the next transfer answers (walleye test
++	 * 43: identify failed at 17-35 s uptime, the retry 10 ms later
++	 * worked; from ~3 min on the first transfer works). Read the chip ID
++	 * until it answers so that probe and every stream-on start on a live
++	 * bus. A sensor that never answers is left to identify/stream to
++	 * report.
++	 */
++	for (i = 0; i < 3; i++) {
++		u8 id;
+ 
++		if (!imx362_read(imx362, IMX362_REG_CHIP_ID, &id))
++			break;
++		usleep_range(10000, 11000);
++	}
++
+ 	return 0;
+ 
+ err_rails:
+@@ -869,6 +892,27 @@
+ 	}
+ 
+ 	return -EINVAL;
++}
++
++/*
++ * Stabilisation runs only while streaming: the OIS is a runtime-PM consumer
++ * of this sensor (device link made in probe), so waking it keeps our rails
++ * up, and letting it sleep lets them drop. Best effort: a missing or failed
++ * OIS leaves the stream unstabilised, not broken.
++ */
++static void imx362_ois_get(struct imx362 *imx362)
++{
++	if (!imx362->ois || imx362->ois_on)
++		return;
++	imx362->ois_on = pm_runtime_resume_and_get(&imx362->ois->dev) == 0;
++}
++
++static void imx362_ois_put(struct imx362 *imx362)
++{
++	if (!imx362->ois_on)
++		return;
++	pm_runtime_put(&imx362->ois->dev);
++	imx362->ois_on = false;
+ }
+ 
+ static int imx362_s_stream(struct v4l2_subdev *sd, int enable)
+@@ -882,6 +926,7 @@
+ 		ret = pm_runtime_resume_and_get(&client->dev);
+ 		if (ret < 0)
+ 			return ret;
++		imx362_ois_get(imx362);
+ 
+ 		mutex_lock(&imx362->lock);
+ 		mode = imx362->cur_mode;
+@@ -915,6 +960,7 @@
+ 			ret = v4l2_ctrl_handler_setup(&imx362->ctrls);
+ 		if (ret) {
+ 			dev_err(&client->dev, "failed to program mode: %d\n", ret);
++			imx362_ois_put(imx362);
+ 			pm_runtime_put(&client->dev);
+ 			return ret;
+ 		}
+@@ -922,6 +968,7 @@
+ 		ret = imx362_write(imx362, IMX362_REG_MODE_SELECT,
+ 				   IMX362_MODE_STREAMING);
+ 		if (ret) {
++			imx362_ois_put(imx362);
+ 			pm_runtime_put(&client->dev);
+ 			return ret;
+ 		}
+@@ -934,6 +981,7 @@
+ 	} else {
+ 		imx362_write(imx362, IMX362_REG_MODE_SELECT,
+ 			     IMX362_MODE_STANDBY);
++		imx362_ois_put(imx362);
+ 		pm_runtime_put(&client->dev);
+ 	}
+ 
+@@ -965,6 +1013,7 @@
+ {
+ 	struct device *dev = &client->dev;
+ 	const struct imx362_mode *mode;
++	struct device_node *np;
+ 	struct imx362 *imx362;
+ 	unsigned int i;
+ 	int ret;
+@@ -1101,6 +1150,26 @@
+ 	/* Idles straight back down -- see the comment in imx179_probe(). */
+ 	pm_runtime_set_active(dev);
+ 	pm_runtime_enable(dev);
++
++	/*
++	 * The OIS answers only with our rails up, so make it our runtime-PM
++	 * consumer: anything that wakes it (its own probe, a calibration read,
++	 * imx362_ois_get()) powers this sensor first. Stateless: the link must
++	 * not hold up either probe; the OIS defers until it exists.
++	 */
++	np = of_parse_phandle(dev->of_node, "google,ois", 0);
++	if (np) {
++		imx362->ois = of_find_i2c_device_by_node(np);
++		of_node_put(np);
++		if (imx362->ois &&
++		    !device_link_add(&imx362->ois->dev, dev,
++				     DL_FLAG_STATELESS | DL_FLAG_PM_RUNTIME)) {
++			dev_warn(dev, "no link to the OIS, stabilisation off\n");
++			put_device(&imx362->ois->dev);
++			imx362->ois = NULL;
++		}
++	}
++
+ 	pm_runtime_idle(dev);
+ 
+ 	return 0;
+@@ -1121,6 +1190,11 @@
+ 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+ 	struct imx362 *imx362 = to_imx362(sd);
+ 
++	if (imx362->ois) {
++		device_link_remove(&imx362->ois->dev, &client->dev);
++		put_device(&imx362->ois->dev);
++	}
++
+ 	v4l2_async_unregister_subdev(sd);
+ 	media_entity_cleanup(&sd->entity);
+ 	v4l2_ctrl_handler_free(&imx362->ctrls);
+--- a/drivers/media/i2c/lc898123f40.c
++++ b/drivers/media/i2c/lc898123f40.c
+@@ -31,8 +31,12 @@
+  * noise either way, and under the haptic motor's 155 Hz it swings by the
+  * same +-190 counts with stabilisation on or off.
+  *
+- * Stabilisation is switched on at probe in still mode, which is what the
+- * vendor HAL does whenever the rear camera opens. The calibration area is
++ * Stabilisation is switched on in still mode whenever the part is powered,
++ * which is what the vendor HAL does whenever the rear camera opens. The
++ * part is powered through runtime PM: on walleye the image sensor names it
++ * (google,ois) and makes it a runtime-PM consumer, so the sensor wakes it
++ * for each stream and its rails (which the part needs besides its own two)
++ * come up first; idle, everything is off. The calibration area is
+  * exposed as an nvmem device, one 32-bit word per four bytes, little-endian
+  * -- the byte order of the vendor's calibration blob, so the field offsets
+  * of libmmcamera_onsemi_lc898123f40xc_eeprom.so apply to it unchanged.
+@@ -46,6 +50,7 @@
+ #include <linux/module.h>
+ #include <linux/mutex.h>
+ #include <linux/nvmem-provider.h>
++#include <linux/pm_runtime.h>
+ #include <linux/regmap.h>
+ #include <linux/regulator/consumer.h>
+ #include <linux/unaligned.h>
+@@ -70,6 +75,7 @@
+ struct lc898123f40 {
+ 	struct regmap *regmap;
+ 	struct mutex lock;	/* serialises command + readback pairs */
++	struct regulator_bulk_data supplies[ARRAY_SIZE(lc898123f40_supply_names)];
+ };
+ 
+ static const struct regmap_config lc898123f40_regmap_config = {
+@@ -120,10 +126,15 @@
+ 				size_t bytes)
+ {
+ 	struct lc898123f40 *ois = priv;
++	struct device *dev = regmap_get_device(ois->regmap);
+ 	unsigned int word;
+ 	u8 buf[4];
+ 	int ret = 0;
+ 
++	ret = pm_runtime_resume_and_get(dev);
++	if (ret)
++		return ret;
++
+ 	mutex_lock(&ois->lock);
+ 	while (bytes) {
+ 		unsigned int skip = offset % 4, n = min_t(size_t, bytes, 4 - skip);
+@@ -143,10 +154,47 @@
+ 		bytes -= n;
+ 	}
+ 	mutex_unlock(&ois->lock);
++	pm_runtime_put(dev);
+ 
+ 	return ret;
+ }
+ 
++static int lc898123f40_runtime_suspend(struct device *dev)
++{
++	struct lc898123f40 *ois = dev_get_drvdata(dev);
++
++	return regulator_bulk_disable(ARRAY_SIZE(ois->supplies), ois->supplies);
++}
++
++/*
++ * The firmware boots from flash; a command completes once it is up. Until
++ * then the part does not even ACK, and it stays silent unless the image
++ * sensor's rails are up too -- which the runtime-PM link to the sensor
++ * guarantees before this runs. Errors during the wait are part of the
++ * wait (the first CCI transfer after the rails rise can time out).
++ */
++static int lc898123f40_runtime_resume(struct device *dev)
++{
++	struct lc898123f40 *ois = dev_get_drvdata(dev);
++	int ret, err;
++
++	ret = regulator_bulk_enable(ARRAY_SIZE(ois->supplies), ois->supplies);
++	if (ret)
++		return ret;
++
++	ret = read_poll_timeout(lc898123f40_wait_ready, err, !err, 10000,
++				300000, false, ois);
++	if (!ret)
++		ret = lc898123f40_enable(ois);
++	if (ret) {
++		dev_dbg(dev, "controller not answering (%d/%d)\n", ret, err);
++		regulator_bulk_disable(ARRAY_SIZE(ois->supplies), ois->supplies);
++		return -ENODEV;
++	}
++
++	return 0;
++}
++
+ static int lc898123f40_probe(struct i2c_client *client)
+ {
+ 	struct device *dev = &client->dev;
+@@ -159,8 +207,8 @@
+ 		.reg_read = lc898123f40_cal_read,
+ 	};
+ 	struct lc898123f40 *ois;
+-	unsigned int fw;
+-	int ret, err;
++	unsigned int fw, i;
++	int ret;
+ 
+ 	ois = devm_kzalloc(dev, sizeof(*ois), GFP_KERNEL);
+ 	if (!ois)
+@@ -169,34 +217,33 @@
+ 	mutex_init(&ois->lock);
+ 	i2c_set_clientdata(client, ois);
+ 
+-	ret = devm_regulator_bulk_get_enable(dev,
+-					     ARRAY_SIZE(lc898123f40_supply_names),
+-					     lc898123f40_supply_names);
++	for (i = 0; i < ARRAY_SIZE(ois->supplies); i++)
++		ois->supplies[i].supply = lc898123f40_supply_names[i];
++	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(ois->supplies),
++				      ois->supplies);
+ 	if (ret)
+-		return dev_err_probe(dev, ret, "failed to enable supplies\n");
++		return dev_err_probe(dev, ret, "failed to get supplies\n");
+ 
+ 	ois->regmap = devm_regmap_init_i2c(client, &lc898123f40_regmap_config);
+ 	if (IS_ERR(ois->regmap))
+ 		return PTR_ERR(ois->regmap);
+ 
++	ret = devm_pm_runtime_enable(dev);
++	if (ret)
++		return ret;
++
+ 	/*
+-	 * The firmware boots from flash; a command completes once it is up.
+-	 * Until then the part does not even ACK, and at boot it stays silent
+-	 * until the IMX362 driver has brought its own rails up: probing after
+-	 * that works every time, probing first never does. Which of those
+-	 * rails it needs is not established, so wait for a boot window and
+-	 * then defer rather than fail -- deferred probes rerun when the sensor
+-	 * binds.
+-	 * ponytail: deferral stands in for the missing supply; name that rail
+-	 * in the binding once it is found and this becomes a plain failure.
++	 * Waking the part also wakes the image sensor that links to it. Until
++	 * that sensor has probed and made the link, the part cannot answer:
++	 * defer -- the sensor binding reruns deferred probes.
+ 	 */
+-	ret = read_poll_timeout(lc898123f40_wait_ready, err, !err, 10000,
+-				200000, false, ois);
++	ret = pm_runtime_resume_and_get(dev);
+ 	if (ret)
+ 		return dev_err_probe(dev, -EPROBE_DEFER,
+-				     "controller not answering (%d)\n", err);
++				     "controller not answering (%d)\n", ret);
+ 
+ 	ret = regmap_read(ois->regmap, LC898123F40_REG_FW_VERSION, &fw);
++	pm_runtime_put(dev);
+ 	if (ret)
+ 		return ret;
+ 	/* a blank RAM word means the firmware did not boot */
+@@ -208,24 +255,18 @@
+ 	if (ret)
+ 		return dev_err_probe(dev, ret, "failed to register nvmem\n");
+ 
+-	ret = lc898123f40_enable(ois);
+-	if (ret)
+-		return dev_err_probe(dev, ret, "failed to enable stabilisation\n");
+-
+-	dev_info(dev, "firmware 0x%02x (id 0x%08x), stabilisation on\n",
++	dev_info(dev, "firmware 0x%02x (id 0x%08x), stabilisation while streaming\n",
+ 		 fw & 0xff, fw);
+ 
+ 	return 0;
+ }
+ 
+-static int lc898123f40_resume(struct device *dev)
+-{
+-	/* the supplies may have dropped across system sleep */
+-	return lc898123f40_enable(dev_get_drvdata(dev));
+-}
++static const struct dev_pm_ops lc898123f40_pm_ops = {
++	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend, pm_runtime_force_resume)
++	SET_RUNTIME_PM_OPS(lc898123f40_runtime_suspend,
++			   lc898123f40_runtime_resume, NULL)
++};
+ 
+-static DEFINE_SIMPLE_DEV_PM_OPS(lc898123f40_pm_ops, NULL, lc898123f40_resume);
+-
+ static const struct i2c_device_id lc898123f40_id[] = {
+ 	{ "lc898123f40" },
+ 	{ }
+@@ -242,7 +283,7 @@
+ 	.driver = {
+ 		.name = "lc898123f40",
+ 		.of_match_table = lc898123f40_of_match,
+-		.pm = pm_sleep_ptr(&lc898123f40_pm_ops),
++		.pm = pm_ptr(&lc898123f40_pm_ops),
+ 	},
+ 	.probe = lc898123f40_probe,
+ 	.id_table = lc898123f40_id,
