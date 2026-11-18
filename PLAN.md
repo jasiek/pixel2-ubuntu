@@ -188,7 +188,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] Rear mirroring (test 46, owner held a book cover): text reads left to right, sharp; not mirrored (imx362 readout unflipped is correct).
     - [ ] `reboot bootloader` sometimes boots Ubuntu again (test 47): 3 failures in ~16 tries overall, 0 of 9 in controlled trials (flashed, after camera use, tethered). Not the IMEM magic (bootloader ignores it after mainline's cold reset). `try-boot.sh` now retries 3x. Long-uptime trial (60 min) also reached fastboot in 12 s: 10/10. Left open as a known rare failure; the retry covers it.
 
-- [ ] **P8.6** Audio: microphones + speakers (owner request 2026-11-18). Estimate 1-3 days; the hard part is not ours alone (Porthole's taimen audio is still unresolved).
+- [x] **P8.6** _Done 2026-11-18: speakers + bottom mic, flashed to boot_b (test 51)._ Audio: microphones + speakers (owner request 2026-11-18). Estimate 1-3 days; the hard part is not ours alone (Porthole's taimen audio is still unresolved).
   - Hardware (downstream `htc/msm8998-audio-muskie.dtsi`): codec WCD9340 "tavil" on SLIMbus, driven through the ADSP (q6afe/q6asm/APR); the mics hang off the codec. Speaker amps on i2c_7 (0xc1b5000): 2x NXP TFA98xx at 0x34/0x35 (reset pm8998_gpio 6/7) OR one TI TAS2557 at 0x4d -- the DT lists both, the board has one kind.
   - Mainline/Porthole: `wcd934x` (mainline), Porthole's msm8998 machine driver (0023), TAS2557 driver (0024, ported from wahoo, needs the DSP firmware from vendor), q6afe I2S fix (0075). No mainline driver for the TFA98xx in wahoo (mainline `tfa989x` covers 9895/9897 only). Porthole taimen DT: the WCD934x MCLK (9.6 MHz via a PMIC clock) is "NOT yet resolved" (their docs/HANDOFF-audio.md).
   - [x] Amp: TI TAS2557 dual-mono pair 0x4c/0x4d (muskie DT: tas2557s "ok", TFA98xx "disabled") -- same part as taimen, Porthole's driver applies. Reset pm8998 gpio 6.
@@ -198,15 +198,15 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [x] Sound card `Google-Pixel-2`: hw:0,0 playback (MultiMedia1), hw:0,1 capture (MultiMedia2). Routes set at boot by `pixel2-audio.service` (taimen UCM values).
   - [x] Speaker: Porthole's TAS2557 driver parses walleye's vendor firmware (2017_04_06: 2 PLLs, 2 programs, 19 configurations).
   - Gate: `arecord` 5 s from the bottom mic and `aplay` it back on the speaker; copy the WAV to the Mac and it is clearly audible.
-  - [x] Objective gate (test 50): speaker plays a 440 Hz tone while DMIC1 records: 440 Hz at amplitude ~1200 (silence before: rms 1), from boot-time routes only. Owner listening check + flash still to do.
+  - [x] Objective gate (test 50): speaker plays a 440 Hz tone while DMIC1 records: 440 Hz at amplitude ~1200 (silence before: rms 1), from boot-time routes only. Flashed (test 51); the mic hearing the speaker through the air is the audible proof.
 
-- [ ] **P8.7** GPU: Adreno 540 with the open driver (owner request 2026-11-18). Estimate 2-4 h if Porthole's wahoo GPU setup carries over.
+- [x] **P8.7** _Done 2026-11-18: FD540 under Mesa, flashed to boot_b (test 51)._ GPU: Adreno 540 with the open driver (owner request 2026-11-18). Estimate 2-4 h if Porthole's wahoo GPU setup carries over.
   - State: our walleye DT has `&adreno_gpu { status = "disabled"; }` (console did not need it). Porthole's shared wahoo DT (0027) already enables it with a zap-shader memory region, and a5xx fixes (0005, 0030-0034, 0067); taimen runs GTK/Chromium on it.
   - [x] Firmware: all four from this phone's vendor partition via pixel2-modem-fw (a530_pm4/pfp, a540_gpmu.fw2 -- not in any linux-firmware -- and a540_zap squashed).
   - [x] Drop the disable, boot (test 49, tethered): adreno binds, microcode loads, /dev/dri/renderD128, no GPU hangs.
   - [x] Userspace: Mesa 25.2 (noble-updates) freedreno: eglinfo GBM renderer "FD540"; kmscube 120 frames in 1.92 s (60 Hz vsync). `kmscube -A` stalls on this command-mode panel (not the GPU).
   - [x] Power: runtime-suspended when idle (active 1.2 s of 119 s after kmscube).
-  - Gate: an OpenGL ES test renders on the GPU (renderer string "FD540"), not llvmpipe.
+  - [x] Gate: an OpenGL ES test renders on the GPU (renderer string "FD540"), not llvmpipe.
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
