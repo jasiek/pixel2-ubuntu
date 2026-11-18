@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: pick the phone's job (P8.5 camera done). Waiting: P9.2 gate (someone else flashes a phone). Also open: pick the phone's job
+## ▶ RESUME HERE: P10 licensing (P8.5-P8.7 camera, audio, GPU done). Waiting: P9.2 gate (someone else flashes a phone). Also open: pick the phone's job
 
 ---
 
@@ -164,7 +164,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] _Done 2026-11-17 (tests 10, 12)._ Mainline variants of pixel2-charge-limit (input suspend via charger `status`) and pixel2-status-led (rgb:status pattern trigger).
     - [x] Wifi: modem (MSS) + ath10k with the wahoo carveouts; firmware paths for mainline (qcom/msm8998/wahoo/*). Works 2026-11-17: `scripts/stage-mainline-wifi.sh` (firmware from the phone's own partitions), rmtfs + tqftpserv + diag-router, `ath regd_override=0x67`.
     - [x] Stable MAC: _done (4.4 records it to /var/lib/pixel2/wlan0.mac, mainline applies it before NetworkManager; same IP .44 on both kernels)._
-    - [ ] Wifi follow-ups: bake firmware + tools into build-rootfs.sh (now staged by hand); IPA/rmnet (mobile data, needs SIM: parked with P8.2).
+    - [x] Wifi follow-ups: firmware + tools are baked in (build-rootfs.sh installs ath10k board data; pixel2-modem-fw builds modem/wifi firmware at boot). IPA/rmnet (mobile data) is parked with P8.2 (needs a SIM).
     - [x] Display (S6E3FA5 panel driver) + touch (rmi4): _done 2026-11-17. Panel: patch 0002 + SMMU identity patch 0003. Touch: Synaptics S3708AR, l28 at 3.008 V (3.3 V froze boots, tests 25-30). pixel2-screen mainline mode: dark from boot, touch wakes the fbcon console on tty1 (TER16x32, 67x60), off after 5 min (test 34)._
     - [x] Baked into `scripts/build-all.sh` (MAINLINE=0 skips): modules, modem tools, ath10k board data from the factory vendor.img, boot-mainline.img; modem firmware built on the phone at boot (`pixel2-modem-fw`).
     - [x] _Flashed 2026-11-17 (owner: "flash it"): `boot_b` (active slot) = build/mainline/boot-mainline.img; boot_a still 4.4. Boots on its own and after `sudo reboot`: running in ~19 s, wifi .44. Back to 4.4: bootloader, `fastboot flash boot_b build/boot.img`._ Flash mainline as the default kernel.
