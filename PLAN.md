@@ -179,7 +179,13 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [ ] Check in a lit scene: rear photo, video quality (dark-room video was all gain noise), orientation/mirroring (front image looked mirrored).
     - _2026-11-18: rear photo sharp + well exposed once `pixel2-camera` waits for the soft-ISP AF lock (~17 s); video 1280x720 16 fps, now 4:2:0 (was High 4:4:4, undecodable on the Mac). Front is NOT mirrored (a projected clock reads right). Rotation confirmed 270 for both (rear: vendor says 90, mainline readout is 180 off, as on taimen); `pixel2-camera` rotates output to portrait (photos 2400x3200 front / 2400x3840 rear, video 720x1280; `PIXEL2_CAMERA_ROTATE=0` keeps landscape)._
   - [x] Lit-scene check done 2026-11-18. Notes: video with rotation runs ~11.5 fps (was 16; videoflip is CPU) -- an MP4 rotation tag instead would keep 16; front has a green cast against window light (AWB/CCM tuning from taimen); rear mirroring not proven (no readable text yet).
-  - [ ] Follow-ups: rear rails are always on (driver-switched rails → chip ID -110); flash LED and laser ToF (M6 rest) not enabled; Easel modules make `reboot bootloader` unreliable? (see log).
+  - Follow-ups (owner "let's work on the open items", 2026-11-18):
+    - [x] Video at full frame rate: rotation in the MP4 track matrix, not videoflip (15-16 fps). Photos: EXIF Orientation 8 (videoflip on 9 MP stalled the pipeline: only the first, black frame got encoded).
+    - [x] Rear rails switched by the driver (patch 0004, test 43): chip-ID read retried (the first CCI transfer after power-up times out early in boot); OIS runtime-PM-linked to imx362, on only while streaming. Idle saving +15-20 mA USB input (~80 mW).
+    - [x] Per-phone lens shading: `pixel2-camera-tuning` writes the Lsc grid from this phone's OTP (front at24, rear OIS flash) to /usr/local/etc/libcamera/ipa/simple.
+    - [ ] Flash LED + laser ToF (M6 rest): DT added, needs a boot test.
+    - [ ] Needs owner: front colour cast (grey/white reference shot) and rear mirroring (text in view).
+    - [ ] `reboot bootloader` sometimes boots normally (seen again in test 43: `systemctl reboot --reboot-argument=bootloader` too, once).
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
