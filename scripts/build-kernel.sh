@@ -14,7 +14,7 @@
 set -euo pipefail
 
 if [ ! -f /.dockerenv ]; then
-    exec "$(dirname "$0")/dev.sh" env STOCK="${STOCK:-0}" JOBS="${JOBS:-}" FRAGMENT="${FRAGMENT:-}" OUT="${OUT:-}" /work/scripts/build-kernel.sh "$@"
+    DEV_CROSS=1 exec "$(dirname "$0")/dev.sh" env STOCK="${STOCK:-0}" JOBS="${JOBS:-}" FRAGMENT="${FRAGMENT:-}" OUT="${OUT:-}" /work/scripts/build-kernel.sh "$@"
 fi
 
 SRC=/work/external/kernel-msm

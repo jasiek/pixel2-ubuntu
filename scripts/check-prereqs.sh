@@ -36,6 +36,7 @@ hdr "Host"
 case "$(uname -s)/$(uname -m)" in
     Darwin/arm64)  ok "macOS on Apple Silicon" ;;
     Linux/aarch64) ok "Linux arm64 (untested host; the scripts target macOS)" ;;
+    Linux/x86_64)  ok "Linux x86_64 (kernels cross-compile natively; the rest runs emulated arm64)" ;;
     *) soft "$(uname -s)/$(uname -m): builds run arm64 containers; on x86 they are emulated and many times slower" ;;
 esac
 if [ "$(uname -s)" = Darwin ]; then
@@ -67,16 +68,27 @@ elif ! docker info >/dev/null 2>&1; then
 else
     ok "Docker is running"
     arch=$(docker info --format '{{.Architecture}}' 2>/dev/null)
+    # Explicit platforms below: a plain ubuntu:24.04 tag is whichever
+    # architecture was pulled last.
+    native=linux/arm64
     case "$arch" in aarch64|arm64) ok "Docker runs arm64 natively" ;;
-        *) soft "Docker architecture '$arch': arm64 images will be emulated (slow)" ;; esac
+        *) native=linux/amd64
+           ok "Docker architecture '$arch': kernels cross-compile in amd64 images"
+           # Everything else (initramfs, userspace tools, the rootfs) is arm64
+           # and needs qemu registered with binfmt_misc.
+           if docker run --rm --platform linux/arm64 ubuntu:24.04 true >/dev/null 2>&1; then
+               ok "Docker runs arm64 images (emulated: slower, but only the small steps)"
+           else
+               bad "Docker can't run arm64 images: docker run --privileged --rm tonistiigi/binfmt --install arm64 (or $(pkg qemu qemu-user-static))"
+           fi ;; esac
     mem=$(docker info --format '{{.MemTotal}}' 2>/dev/null); mem_gb=$(( ${mem:-0} / 1073741824 ))
     if [ "$mem_gb" -ge 6 ]; then ok "Docker memory ${mem_gb} GB"
     else soft "Docker has ${mem_gb} GB memory; builds were tested with 8 GB (Docker Desktop > Settings > Resources)"; fi
     # The repo must be visible inside containers. Docker's VM only sees the
     # host folders it shares (Colima: just $HOME by default); for any other
     # path, -v quietly mounts an empty directory.
-    if docker image inspect ubuntu:24.04 >/dev/null 2>&1 || docker pull -q ubuntu:24.04 >/dev/null 2>&1; then
-        if docker run --rm -v "$PWD":/w:ro ubuntu:24.04 test -f /w/scripts/check-prereqs.sh 2>/dev/null; then
+    if docker pull -q --platform "$native" ubuntu:24.04 >/dev/null 2>&1; then
+        if docker run --rm --platform "$native" -v "$PWD":/w:ro ubuntu:24.04 test -f /w/scripts/check-prereqs.sh 2>/dev/null; then
             ok "containers can see this folder"
         else
             vol=$(printf '%s' "$PWD" | cut -d/ -f1-3)

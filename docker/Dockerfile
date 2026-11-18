@@ -3,7 +3,10 @@
 # Runs natively as arm64 on Apple Silicon: no QEMU, no cross-compiler for the
 # main kernel. The stock kernel was built with Android clang 11.0.1, so we
 # use Ubuntu's clang-11 to match.
-FROM --platform=linux/arm64 ubuntu:20.04
+# On an x86 host build-kernel.sh uses an amd64 build of this image instead
+# (scripts/dev.sh, DEV_CROSS=1), which adds the aarch64 binutils/gcc.
+FROM ubuntu:20.04
+ARG TARGETARCH
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -15,6 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python2 python3 \
         android-sdk-libsparse-utils e2fsprogs \
         busybox-static device-tree-compiler \
+    && if [ "$TARGETARCH" = amd64 ]; then \
+        apt-get install -y --no-install-recommends binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu; \
+    fi \
     && rm -rf /var/lib/apt/lists/*
 
 # Unversioned clang/ld.lld names, as the kernel Makefile expects.
