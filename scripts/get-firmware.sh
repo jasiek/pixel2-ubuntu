@@ -9,6 +9,7 @@
 #                                        image zip (restoring stock Android)
 # - firmware/boot.img                    factory DTB for build-bootimg.sh
 # - firmware/vbmeta.img                  flashed with verification off
+# - firmware/vendor.img                  wifi board files for build-mainline-fw.sh
 # Proprietary Google files: firmware/ is gitignored, never commit it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -20,7 +21,8 @@ ZIP=firmware/$BUILD-factory-0c23f6cf.zip
 URL=https://dl.google.com/dl/android/aosp/$BUILD-factory-0c23f6cf.zip
 SHA256=0c23f6cf9e2194a3e72b1288f65c5a7f2f6c020080af49c8a494ee99ab3eb543
 
-if [ -f firmware/boot.img ] && [ -f firmware/vbmeta.img ] && [ -f "firmware/$BUILD/flash-all.sh" ]; then
+if [ -f firmware/boot.img ] && [ -f firmware/vbmeta.img ] && [ -f firmware/vendor.img ] \
+    && [ -f "firmware/$BUILD/flash-all.sh" ]; then
     echo "firmware: up to date ($BUILD)"
     exit 0
 fi
@@ -42,5 +44,5 @@ if [ "$got" != "$SHA256" ]; then
 fi
 
 unzip -o -q "$ZIP" -d firmware/
-unzip -o -q -j "firmware/$BUILD/image-$BUILD.zip" boot.img vbmeta.img -d firmware/
-ls -la firmware/boot.img firmware/vbmeta.img "firmware/$BUILD/flash-all.sh"
+unzip -o -q -j "firmware/$BUILD/image-$BUILD.zip" boot.img vbmeta.img vendor.img -d firmware/
+ls -la firmware/boot.img firmware/vbmeta.img firmware/vendor.img "firmware/$BUILD/flash-all.sh"
