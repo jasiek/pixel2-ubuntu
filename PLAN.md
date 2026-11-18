@@ -191,7 +191,8 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
 - [ ] **P8.6** Audio: microphones + speakers (owner request 2026-11-18). Estimate 1-3 days; the hard part is not ours alone (Porthole's taimen audio is still unresolved).
   - Hardware (downstream `htc/msm8998-audio-muskie.dtsi`): codec WCD9340 "tavil" on SLIMbus, driven through the ADSP (q6afe/q6asm/APR); the mics hang off the codec. Speaker amps on i2c_7 (0xc1b5000): 2x NXP TFA98xx at 0x34/0x35 (reset pm8998_gpio 6/7) OR one TI TAS2557 at 0x4d -- the DT lists both, the board has one kind.
   - Mainline/Porthole: `wcd934x` (mainline), Porthole's msm8998 machine driver (0023), TAS2557 driver (0024, ported from wahoo, needs the DSP firmware from vendor), q6afe I2S fix (0075). No mainline driver for the TFA98xx in wahoo (mainline `tfa989x` covers 9895/9897 only). Porthole taimen DT: the WCD934x MCLK (9.6 MHz via a PMIC clock) is "NOT yet resolved" (their docs/HANDOFF-audio.md).
-  - [ ] Find which amp walleye has: with the rail up, probe i2c_7 at 0x34/0x35/0x4d (read-only ID registers; no blind scan, see P8.5 M1 note).
+  - [x] Amp: TI TAS2557 dual-mono pair 0x4c/0x4d (muskie DT: tas2557s "ok", TFA98xx "disabled") -- same part as taimen, Porthole's driver applies. Reset pm8998 gpio 6.
+  - [x] Staged 2026-11-18 (`kernel/mainline/walleye-audio.dtsi`, from Porthole's taimen 0084): ADSP on, SLIMbus + WCD9340, q6 dais, LPASS SMMU, sound card, TAS2557 on blsp2_i2c1. Firmware (adsp.mbn, tas2557s_*uCDSP.bin) by pixel2-modem-fw; alsa-utils in rootfs. Not boot-tested.
   - [ ] ADSP up with audio services (adsp.mbn from vendor is already loaded for other reasons? check `remoteproc`), APR/q6 devices present.
   - [ ] Codec: WCD9340 on SLIMbus enumerates (`wcd934x` binds), MCLK solved or worked around.
   - [ ] Sound card: walleye DT node from Porthole's taimen one; `aplay -l` / `arecord -l` list it; UCM or a plain `amixer` script for routes.

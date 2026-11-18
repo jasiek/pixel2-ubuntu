@@ -13,7 +13,8 @@
  *  - mss/wifi: enabled 2026-11-17 (Porthole's wahoo carveouts: 120 MiB mpss,
  *    fixed MSA). Needs rmtfs, tqftpserv, diag-router + firmware in
  *    /lib/firmware/qcom/msm8998/wahoo (scripts/stage-mainline-wifi.sh).
- *  - adsp/slpi: not needed headless.
+ *  - adsp: enabled 2026-11-18 for audio (P8.6, walleye-audio.dtsi).
+ *  - slpi: sensors hub, not needed headless.
  *  - charger/fg: enabled (2026-11-17); walleye.dts values (4.4 V, 2700 mAh)
  *    match HTC's downstream batterydata-walleye.
  *  - blsp1_uart3: Bluetooth (needs the wifi/modem side).
@@ -21,6 +22,7 @@
 
 #include "msm8998-google-walleye.dts"
 #include "wahoo-dtbo-sink.dtsi"
+#include "walleye-audio.dtsi"
 #include <dt-bindings/leds/common.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/interrupt-controller/irq.h>
@@ -31,7 +33,6 @@
 	qcom,msm-id = <0x124 0x20001>;
 };
 
-&remoteproc_adsp { status = "disabled"; };
 &remoteproc_slpi { status = "disabled"; };
 &blsp1_uart3 { status = "disabled"; };
 

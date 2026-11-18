@@ -1,0 +1,250 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Pixel 2 (walleye) audio, P8.6: speakers + microphones.
+ *
+ * Porthole's taimen audio (patch 0084, Giuseppe Maggio) adapted to walleye.
+ * The SoC side is identical: the msm8998.dtsi base nodes (slimbam/slim,
+ * ADSP + APR/q6, lpass_q6_smmu) and the downstream shared files agree on
+ * codec reset tlmm 64, codec IRQ tlmm 54, Quaternary MI2S on gpio58/59/61.
+ *
+ * Walleye-specific, from HTC's htc/msm8998-audio-muskie.dtsi:
+ *  - Speakers: the TI TAS2557 dual-mono pair at 0x4c/0x4d on i2c_7
+ *    (blsp2_i2c1), status "ok" there; the NXP TFA98xx entries at 0x34/0x35
+ *    are "disabled" (other board variant). Reset is pm8998 gpio 6 (taimen: 5).
+ *    The amps are fed straight from the ADSP over Quaternary MI2S SD1; the
+ *    codec is not in the playback path.
+ *  - Microphones: DMIC1 (MIC BIAS1), DMIC2 + DMIC3 (MIC BIAS3) on the
+ *    WCD9340. Taimen's routing pairs DMIC0/1->BIAS1, DMIC2/3->BIAS3, so it
+ *    covers walleye unchanged.
+ *
+ * Known open issue inherited from taimen (Porthole HANDOFF-audio §2.5): the
+ * codec wants a 9.6 MHz MCLK but LN_BB_CLK2 stays at 19.2 MHz; capture works
+ * there but was measured "half-rate". Playback does not use the codec.
+ *
+ * Firmware: adsp.mbn (squashed) and tas2557s_*uCDSP.bin, both from this
+ * phone's vendor partition via pixel2-modem-fw.
+ */
+
+#include <dt-bindings/sound/qcom,q6afe.h>
+#include <dt-bindings/sound/qcom,q6asm.h>
+
+/ {
+	sound {
+		compatible = "qcom,msm8998-sndcard";
+		model = "Google-Pixel-2";
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&quat_mi2s_active &quat_mi2s_sd1_active>;
+
+		/* Capture-side routing only (taimen's, see the header). */
+		audio-routing = "RX_BIAS", "MCLK",
+				"MIC BIAS1", "MCLK",
+				"MIC BIAS2", "MCLK",
+				"MIC BIAS3", "MCLK",
+				"MIC BIAS4", "MCLK",
+				"AMIC1", "MIC BIAS1",
+				"AMIC2", "MIC BIAS2",
+				"AMIC3", "MIC BIAS3",
+				"AMIC4", "MIC BIAS4",
+				"DMIC0", "MIC BIAS1",
+				"DMIC1", "MIC BIAS1",
+				"DMIC2", "MIC BIAS3",
+				"DMIC3", "MIC BIAS3",
+				"DMIC4", "MIC BIAS4",
+				"DMIC5", "MIC BIAS4",
+				"MM_DL1", "MultiMedia1 Playback",
+				"MultiMedia2 Capture", "MM_UL2";
+
+		mm1-dai-link {
+			link-name = "MultiMedia1";
+			cpu {
+				sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA1>;
+			};
+		};
+
+		mm2-dai-link {
+			link-name = "MultiMedia2";
+			cpu {
+				sound-dai = <&q6asmdai MSM_FRONTEND_DAI_MULTIMEDIA2>;
+			};
+		};
+
+		slim-dai-link {
+			link-name = "SLIM Playback";
+			cpu {
+				sound-dai = <&q6afedai SLIMBUS_0_RX>;
+			};
+			platform {
+				sound-dai = <&q6routing>;
+			};
+			codec {
+				sound-dai = <&wcd9340 0>;
+			};
+		};
+
+		slimcap-dai-link {
+			link-name = "SLIM Capture";
+			cpu {
+				sound-dai = <&q6afedai SLIMBUS_0_TX>;
+			};
+			platform {
+				sound-dai = <&q6routing>;
+			};
+			codec {
+				sound-dai = <&wcd9340 1>;
+			};
+		};
+
+		quat-mi2s-dai-link {
+			link-name = "Quaternary MI2S Playback";
+			cpu {
+				sound-dai = <&q6afedai QUATERNARY_MI2S_RX>;
+			};
+			platform {
+				sound-dai = <&q6routing>;
+			};
+			codec {
+				sound-dai = <&speaker_amp>;
+			};
+		};
+	};
+};
+
+&remoteproc_adsp {
+	status = "okay";
+};
+
+&blsp2_i2c1 {
+	status = "okay";
+
+	/* The driver drives both channels; 0x4c is reached by broadcast. */
+	speaker_amp: audio-codec@4d {
+		compatible = "ti,tas2557";
+		reg = <0x4d>;
+		reset-gpios = <&pm8998_gpios 6 GPIO_ACTIVE_HIGH>;
+		#sound-dai-cells = <0>;
+	};
+};
+
+&slimbam {
+	status = "okay";
+};
+
+&slim {
+	status = "okay";
+
+	slim@1 {
+		reg = <1>;
+		#address-cells = <2>;
+		#size-cells = <0>;
+
+		wcd9340_ifd: ifd@0,0 {
+			compatible = "slim217,250";
+			reg = <0 0>;
+		};
+
+		wcd9340: codec@1,0 {
+			compatible = "slim217,250";
+			reg = <1 0>;
+
+			reset-gpios = <&tlmm 64 GPIO_ACTIVE_HIGH>;
+			slim-ifc-dev = <&wcd9340_ifd>;
+
+			interrupt-parent = <&tlmm>;
+			interrupts = <54 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-controller;
+			#interrupt-cells = <1>;
+
+			clock-names = "extclk";
+			clocks = <&rpmcc RPM_SMD_LN_BB_CLK2>;
+			clock-frequency = <9600000>;
+			clock-output-names = "mclk";
+			#clock-cells = <0>;
+
+			vdd-buck-supply = <&vreg_s4a_1p8>;
+			vdd-buck-sido-supply = <&vreg_s4a_1p8>;
+			vdd-tx-supply = <&vreg_s4a_1p8>;
+			vdd-rx-supply = <&vreg_s4a_1p8>;
+			vdd-io-supply = <&vreg_s4a_1p8>;
+
+			qcom,micbias1-microvolt = <1800000>;
+			qcom,micbias2-microvolt = <1800000>;
+			qcom,micbias3-microvolt = <1800000>;
+			qcom,micbias4-microvolt = <1800000>;
+
+			#address-cells = <1>;
+			#size-cells = <1>;
+			#sound-dai-cells = <1>;
+
+			wcdgpio: gpio@42 {
+				compatible = "qcom,wcd9340-gpio";
+				reg = <0x42 0x2>;
+				gpio-controller;
+				#gpio-cells = <2>;
+			};
+		};
+	};
+};
+
+/* Google's wahoo ADSP firmware has no "avs/audio" protection domain (taimen). */
+&q6core {
+	/delete-property/ qcom,protection-domain;
+};
+
+&q6afe {
+	/delete-property/ qcom,protection-domain;
+};
+
+&q6asm {
+	/delete-property/ qcom,protection-domain;
+};
+
+&q6adm {
+	/delete-property/ qcom,protection-domain;
+};
+
+/* The DSP reaches PCM buffers only through this SMMU (taimen: SoC death without). */
+&lpass_q6_smmu {
+	status = "okay";
+};
+
+&q6asmdai {
+	dai@0 {
+		reg = <0>;
+	};
+	dai@1 {
+		reg = <1>;
+	};
+	dai@2 {
+		reg = <2>;
+	};
+	dai@3 {
+		reg = <3>;
+	};
+};
+
+/* Speakers on SD1 only, SoC as bit/frame clock master (walleye: rx-lines SD1). */
+&q6afedai {
+	dai@22 {
+		reg = <QUATERNARY_MI2S_RX>;
+		qcom,sd-lines = <1>;
+	};
+};
+
+&tlmm {
+	/* Vendor values (8 mA, no pull); clocks idle high, the amps sample them. */
+	quat_mi2s_active: quat-mi2s-active {
+		pins = "gpio58", "gpio59";
+		function = "qua_mi2s";
+		drive-strength = <8>;
+		bias-disable;
+		output-high;
+	};
+
+	quat_mi2s_sd1_active: quat-mi2s-sd1-active {
+		pins = "gpio61";
+		function = "qua_mi2s";
+		drive-strength = <8>;
+		bias-disable;
+	};
+};
