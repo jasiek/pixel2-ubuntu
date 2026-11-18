@@ -79,7 +79,7 @@ else
            if docker run --rm --platform linux/arm64 ubuntu:24.04 true >/dev/null 2>&1; then
                ok "Docker runs arm64 images (emulated: slower, but only the small steps)"
            else
-               bad "Docker can't run arm64 images: docker run --privileged --rm tonistiigi/binfmt --install arm64 (or $(pkg qemu qemu-user-static))"
+               soft "Docker can't run arm64 images yet; build-all.sh registers qemu for them (or: $(pkg qemu qemu-user-static))"
            fi ;; esac
     mem=$(docker info --format '{{.MemTotal}}' 2>/dev/null); mem_gb=$(( ${mem:-0} / 1073741824 ))
     if [ "$mem_gb" -ge 6 ]; then ok "Docker memory ${mem_gb} GB"

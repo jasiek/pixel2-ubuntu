@@ -29,6 +29,21 @@ say "1/5 Prerequisites"
 # All host checks live in check-prereqs.sh (it reports every gap at once).
 # Flash/login tools are only warnings there; run it without --build to see them.
 scripts/check-prereqs.sh --build || die "Prerequisites missing (see FAIL lines above)."
+
+# On an x86 Docker the kernels cross-compile (scripts/dev.sh, DEV_CROSS), but
+# the initramfs, tools and rootfs are arm64 images: register qemu for them.
+# Privileged, and only until the host reboots, so it is checked every run.
+BINFMT=tonistiigi/binfmt:qemu-v10.2.3-68@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+arm64_runs() { docker run --rm --platform linux/arm64 ubuntu:24.04 true >/dev/null 2>&1; }
+case "$(docker info --format '{{.Architecture}}')" in
+    aarch64|arm64) ;;
+    *) if ! arm64_runs; then
+           echo "Registering qemu for arm64 containers ($BINFMT)"
+           docker run --privileged --rm "$BINFMT" --install arm64 >/dev/null
+           arm64_runs || die "arm64 containers still don't run after installing qemu binfmt."
+       fi
+       echo "arm64 containers: emulated (kernels cross-compile natively)" ;;
+esac
 mkdir -p build/.stamps
 
 # ---- 2. Sources and firmware -----------------------------------------------
