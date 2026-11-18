@@ -37,7 +37,11 @@ meson setup /tmp/lc-build "$SRC" --prefix=/usr/local --buildtype=release \
     -Ddocumentation=disabled -Dwerror=false >/tmp/meson.log || { tail -40 /tmp/meson.log; exit 1; }
 meson compile -C /tmp/lc-build
 DESTDIR="$OUT/root" meson install --no-rebuild -C /tmp/lc-build >/dev/null
+# Tuning: Porthole's taimen files, unless camera/tuning/ has a walleye one
+# (imx179: Bayes AWB on walleye's vendor locus). pixel2-camera-tuning puts
+# each phone's own lens shading on top at boot.
 for t in imx179 imx362; do
-    install -Dm644 "$P/$t.yaml" "$OUT/root/usr/local/share/libcamera/ipa/simple/$t.yaml"
+    src="$P/$t.yaml"; [ -f "/work/camera/tuning/$t.yaml" ] && src="/work/camera/tuning/$t.yaml"
+    install -Dm644 "$src" "$OUT/root/usr/local/share/libcamera/ipa/simple/$t.yaml"
 done
 ls "$OUT/root/usr/local/bin" "$OUT/root/usr/local/lib/aarch64-linux-gnu" 2>/dev/null | head -20

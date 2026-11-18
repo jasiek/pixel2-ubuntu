@@ -184,7 +184,8 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] Rear rails switched by the driver (patch 0004, test 43): chip-ID read retried (the first CCI transfer after power-up times out early in boot); OIS runtime-PM-linked to imx362, on only while streaming. Idle saving +15-20 mA USB input (~80 mW).
     - [x] Per-phone lens shading: `pixel2-camera-tuning` writes the Lsc grid from this phone's OTP (front at24, rear OIS flash) to /usr/local/etc/libcamera/ipa/simple.
     - [x] Flash LED + laser ToF (M6 rest, test 44): white:flash torch +133 mA; VL53L0 reads 129-131 mm (polled; IRQ pin has no live pull-up). boot_b reflashed with all of the above.
-    - [ ] Needs owner: front colour cast (grey/white reference shot) and rear mirroring (text in view).
+    - [x] Front colour cast (test 45): black level measured at 64 on both sensors (raw, 1-line exposure), so not that; the vendor CCM is walleye's own. Cause was grey-world AWB: front now uses Bayes AWB on the locus from walleye's own vendor 3A lib (`camera/tuning/imx179.yaml`, `tools/chromatix-awb-points.py`). White ceiling: R/G 0.953 B/G 0.930 -> 1.019 / 1.026.
+    - [ ] Needs owner: rear mirroring (printed text in view).
     - [ ] `reboot bootloader` sometimes boots normally: test 43/44 saw it 2 of 3 times from a tethered `fastboot boot` session, never from the flashed boot.
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)

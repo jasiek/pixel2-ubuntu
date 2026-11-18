@@ -170,7 +170,7 @@ if [ "$MAINLINE" != 0 ]; then
 
     H_MBOOT=$(hash_of scripts/build-mainline-bootimg.sh scripts/make-bootimg.sh "@$H_MKERNEL" "@$H_INITRAMFS")
     step mainline-bootimg build/mainline/boot-mainline.img "$H_MBOOT" scripts/build-mainline-bootimg.sh
-    H_LIBCAMERA=$(hash_of scripts/build-libcamera.sh docker/libcamera "@$(git -C external/libcamera rev-parse HEAD)" \
+    H_LIBCAMERA=$(hash_of scripts/build-libcamera.sh docker/libcamera camera/tuning "@$(git -C external/libcamera rev-parse HEAD)" \
         "@$(git -C external/porthole-pmaports rev-parse HEAD)")
     step libcamera build/libcamera/root/usr/local/bin/cam "$H_LIBCAMERA" scripts/build-libcamera.sh
     H_ML="@$H_MTOOLS $H_MFW $H_MKERNEL $H_MBOOT $H_LIBCAMERA"

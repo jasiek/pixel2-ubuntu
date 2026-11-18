@@ -65,7 +65,7 @@ def lsc_block(sensor, src, sha, p):
                 + ",\n          ".join(rows) + " ]\n")
 
     return ("  - Lsc:\n"
-            "      # Lens shading from THIS phone's %s OTP (%s, sha256 %s),\n"
+            "      # Lens shading from THIS phone's %s OTP (%s; OTP+base sha256 %s),\n"
             "      # written by pixel2-camera-tuning: the reciprocal of the\n"
             "      # measured response, Gr/Gb averaged.\n"
             "      grid: [ %d, %d ]\n" % (sensor, src, sha, W, H)
@@ -95,13 +95,15 @@ def main():
         try:
             with open(src, "rb") as f:
                 blob = f.read()
-            sha = hashlib.sha256(blob).hexdigest()[:16]
+            with open(os.path.join(SHARE, sensor + ".yaml")) as f:
+                base = f.read()
+            # the OTP and the shipped file both feed the override
+            sha = hashlib.sha256(blob + base.encode()).hexdigest()[:16]
             if os.path.exists(dst) and sha in open(dst).read():
                 print("%s: up to date (%s)" % (sensor, sha))
                 continue
             block = lsc_block(sensor, os.path.dirname(src), sha, planes(blob))
-            with open(os.path.join(SHARE, sensor + ".yaml")) as f:
-                text = splice(f.read(), block)
+            text = splice(base, block)
         except (OSError, ValueError) as e:
             print("%s: %s, keeping the shipped tuning" % (sensor, e))
             continue
