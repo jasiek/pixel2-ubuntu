@@ -12,16 +12,16 @@ What works:
 - text console on screen
 - screen blanking
 - camera
+- microphone and speakers
+- GPU
 
 What doesn't work (yet)
 - modem
 - mouse pointer via LCD touch
 
 What hasn't been tested (yet):
-- sensors
-- microphone and speakers
+- sensors (pressure, accelerometer, etc)
 - usb ethernet
-- GPU (does this even have a GPU?)
 - x/wayland
 </human>
 
