@@ -3,8 +3,10 @@
 # Kernel 7.x needs LLVM >= 18 (Porthole builds with LLVM=1, clang 22), newer
 # than the 20.04 container used for the downstream 4.4 kernel
 # (docker/Dockerfile), so it gets its own image. Build with LLVM=-18.
-# Native arm64 on Apple Silicon.
-FROM --platform=linux/arm64 ubuntu:24.04
+# Native arm64 on Apple Silicon. On an x86 host build-mainline.sh uses an
+# amd64 build of this image (scripts/dev.sh, DEV_CROSS=1): clang targets arm64
+# by itself, so it needs nothing extra.
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 

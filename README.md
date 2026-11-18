@@ -29,7 +29,7 @@ The Pixel 2 (walleye) boots straight into plain, headless Ubuntu 24.04 arm64, re
 
 ## Install
 
-You need: an Apple Silicon Mac with Docker running, `adb` + `fastboot` (`brew install android-platform-tools`), a **case-sensitive** volume for the clone (the kernel source has files whose names differ only in case; step 1 makes one), and a Pixel 2 whose bootloader can be unlocked (not Verizon).
+You need: an Apple Silicon Mac with Docker running (an x86 Linux host works too: the kernels cross-compile natively, the other steps need arm64 emulation, which `scripts/check-prereqs.sh` checks for), `adb` + `fastboot` (`brew install android-platform-tools`), a **case-sensitive** volume for the clone (the kernel source has files whose names differ only in case; step 1 makes one), and a Pixel 2 whose bootloader can be unlocked (not Verizon).
 
 1. Create a case-sensitive volume. It's a new APFS volume in your existing disk's container: it shares free space, so nothing needs partitioning or resizing.
    ```sh

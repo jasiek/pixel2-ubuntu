@@ -6,9 +6,11 @@
 #
 # Sources: external/linux-mainline (kernel.org v7.2.2) + Porthole's patch
 # series (external/porthole-pmaports, applied in APKBUILD order) + ours in
-# kernel/mainline/ (DTS, config fragment, patches/*.patch applied last). The patched tree is an
-# APFS clone in build/mainline/src, so the submodule stays pristine.
+# kernel/mainline/ (DTS, config fragment, patches/*.patch applied last). The
+# patched tree is a copy (an APFS clone on macOS) in build/mainline/src, so the
+# submodule stays pristine.
 # Toolchain: clang 18 (LLVM=-18) in docker/mainline, like Porthole's LLVM=1.
+# On an x86 host that container is amd64 and cross-compiles (scripts/dev.sh).
 #
 # Output: build/mainline/out/arch/arm64/boot/Image.gz
 #         build/mainline/out/arch/arm64/boot/dts/qcom/msm8998-google-walleye-ubuntu.dtb
@@ -19,7 +21,7 @@ DTS=msm8998-google-walleye-ubuntu
 
 if [ ! -f /.dockerenv ]; then
     cd "$(dirname "$0")/.."
-    export DEV_IMAGE=pixel2-mainline-build DEV_DOCKERDIR=docker/mainline
+    export DEV_IMAGE=pixel2-mainline-build DEV_DOCKERDIR=docker/mainline DEV_CROSS=1
     if [ ! -f external/linux-mainline/Makefile ] || [ ! -f "$PKG/APKBUILD" ]; then
         git submodule update --init external/linux-mainline external/porthole-pmaports
     fi
