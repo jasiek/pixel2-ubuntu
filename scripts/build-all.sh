@@ -26,24 +26,10 @@ die()  { printf '\033[31mERROR:\033[0m %s\n' "$*" >&2; exit 1; }
 
 # ---- 1. Prerequisites ------------------------------------------------------
 say "1/5 Prerequisites"
-for c in docker git curl unzip shasum python3; do
-    command -v "$c" >/dev/null || die "'$c' not found. Install it and run this again."
-done
-docker info >/dev/null 2>&1 || die "Docker is not running. Start Docker Desktop and run this again."
+# All host checks live in check-prereqs.sh (it reports every gap at once).
+# Flash/login tools are only warnings there; run it without --build to see them.
+scripts/check-prereqs.sh --build || die "Prerequisites missing (see FAIL lines above)."
 mkdir -p build/.stamps
-touch build/.stamps/CaseTest
-if [ -e build/.stamps/casetest ]; then
-    rm -f build/.stamps/CaseTest
-    die "This folder is on a case-insensitive filesystem; the kernel needs case-sensitive names.
-       Create a case-sensitive APFS volume (Disk Utility: APFS (Case-sensitive)) and clone there."
-fi
-rm -f build/.stamps/CaseTest
-for c in adb fastboot; do
-    command -v "$c" >/dev/null || warn "'$c' not found: not needed to build, but needed to flash (brew install android-platform-tools)."
-done
-ls ~/.ssh/*.pub >/dev/null 2>&1 \
-    || warn "No ~/.ssh/*.pub: only the project key build/ssh/pixel2_ed25519 will be able to log in (scripts/ssh.sh uses it)."
-echo "ok"
 
 # ---- 2. Sources and firmware -----------------------------------------------
 say "2/5 Sources and firmware"

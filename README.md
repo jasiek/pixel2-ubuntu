@@ -45,6 +45,7 @@ You need: an Apple Silicon Mac with Docker running, `adb` + `fastboot` (`brew in
    cd pixel2-ubuntu
    ```
    No `--recurse-submodules` needed: the build fetches the submodules as shallow clones.
+   Then run `scripts/check-prereqs.sh`: it lists everything missing (tools, Docker settings, disk, network) with the command to fix each. The build runs it too.
 3. Build: `scripts/build-all.sh`. It fetches the sources and Google's factory image (1.7 GB, SHA-256 checked), asks once for wifi details, and builds `build/boot.img` + `build/rootfs.simg`. The first run takes the longest (the kernel); later runs rebuild only what changed.
 4. Flash: `scripts/flash.sh`. It walks you through it step by step and checks the phone before each step. It **erases the phone** and asks for `yes` first. The active slot gets the mainline 7.2.2 kernel, the other slot keeps 4.4 as a fallback (`KERNEL=4.4 scripts/flash.sh` for 4.4 on both).
 5. Log in: `scripts/ssh.sh` (over USB; `PIXEL2_HOST=pixel2.local scripts/ssh.sh` over wifi). Your `~/.ssh/*.pub` keys are installed for the user `ubuntu`.
