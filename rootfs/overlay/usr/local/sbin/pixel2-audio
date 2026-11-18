@@ -1,0 +1,22 @@
+#!/bin/sh
+# Default audio routes for the Pixel 2 (walleye) sound card (P8.6), so plain
+# ALSA works after boot:
+#   aplay -D hw:0,0 file.wav                     speakers (TAS2557 pair)
+#   arecord -D hw:0,1 -f S16_LE -r 48000 -c 1 x.wav   bottom mic (DMIC1)
+# Routes are Porthole's taimen UCM (HiFi.conf), which match walleye: speakers
+# on Quaternary MI2S fed by MultiMedia1; DMIC1 -> DEC7 -> SLIM TX7 ->
+# SLIMBUS_0_TX -> MultiMedia2. Waits up to 30 s for the card; never fails boot.
+card=GooglePixel2
+i=0
+while [ ! -e /proc/asound/$card ] && [ $i -lt 30 ]; do sleep 1; i=$((i + 1)); done
+[ -e /proc/asound/$card ] || { echo "no $card sound card"; exit 0; }
+set_() { amixer -q -c $card cset name="$1" "$2" || echo "failed: $1 = $2"; }
+set_ 'QUAT_MI2S_RX Audio Mixer MultiMedia1' 1
+set_ 'Speaker Configuration' 'configuration_Tuning Mode_48 KHz_s1'
+set_ 'MultiMedia2 Mixer SLIMBUS_0_TX' 1
+set_ 'AIF1_CAP Mixer SLIM TX7' 1
+set_ 'CDC_IF TX7 MUX' DEC7
+set_ 'ADC MUX7' DMIC
+set_ 'DMIC MUX7' DMIC1
+set_ 'IIR0 INP0 MUX' DEC7
+echo "routes set on $card"

@@ -1,0 +1,13 @@
+[Unit]
+Description=Pixel 2 default audio routes: speakers + bottom mic (P8.6)
+After=sound.target alsa-restore.service
+# The sound card exists only on the mainline kernel.
+ConditionKernelVersion=>=5
+
+[Service]
+# simple, not oneshot: never hold boot while waiting for the card.
+Type=simple
+ExecStart=/usr/local/sbin/pixel2-audio
+
+[Install]
+WantedBy=multi-user.target

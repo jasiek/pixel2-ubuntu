@@ -43,6 +43,7 @@ RUN chmod 600 /etc/NetworkManager/system-connections/*.nmconnection \
         rmtfs.service tqftpserv.service \
         pixel2-wifi-mac.service pixel2-wifi-mac-record.service \
         pixel2-camera-tuning.service \
+        pixel2-audio.service \
     # No keyboard and no VT kernel: the screen is drawn by pixel2-screen.
     && systemctl mask getty@tty1.service \
     # Host keys are generated on first boot (ssh.service drop-in).

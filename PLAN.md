@@ -193,11 +193,12 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - Mainline/Porthole: `wcd934x` (mainline), Porthole's msm8998 machine driver (0023), TAS2557 driver (0024, ported from wahoo, needs the DSP firmware from vendor), q6afe I2S fix (0075). No mainline driver for the TFA98xx in wahoo (mainline `tfa989x` covers 9895/9897 only). Porthole taimen DT: the WCD934x MCLK (9.6 MHz via a PMIC clock) is "NOT yet resolved" (their docs/HANDOFF-audio.md).
   - [x] Amp: TI TAS2557 dual-mono pair 0x4c/0x4d (muskie DT: tas2557s "ok", TFA98xx "disabled") -- same part as taimen, Porthole's driver applies. Reset pm8998 gpio 6.
   - [x] Staged 2026-11-18 (`kernel/mainline/walleye-audio.dtsi`, from Porthole's taimen 0084): ADSP on, SLIMbus + WCD9340, q6 dais, LPASS SMMU, sound card, TAS2557 on blsp2_i2c1. Firmware (adsp.mbn, tas2557s_*uCDSP.bin) by pixel2-modem-fw; alsa-utils in rootfs. Not boot-tested.
-  - [ ] ADSP up with audio services (adsp.mbn from vendor is already loaded for other reasons? check `remoteproc`), APR/q6 devices present.
-  - [ ] Codec: WCD9340 on SLIMbus enumerates (`wcd934x` binds), MCLK solved or worked around.
-  - [ ] Sound card: walleye DT node from Porthole's taimen one; `aplay -l` / `arecord -l` list it; UCM or a plain `amixer` script for routes.
-  - [ ] Speaker: amp driver (TAS2557 from Porthole, or port TFA98xx from wahoo if that is the fitted part) + its firmware from vendor.img.
+  - [x] ADSP up (adsp.mbn squashed from vendor), APR/q6 services registered (protection-domain property dropped, as on taimen).
+  - [x] Codec: WCD9340 enumerates on SLIMbus (217:250). Capture pitch is right (440 Hz tone recorded at 440), so taimen's half-rate MCLK symptom does not show here.
+  - [x] Sound card `Google-Pixel-2`: hw:0,0 playback (MultiMedia1), hw:0,1 capture (MultiMedia2). Routes set at boot by `pixel2-audio.service` (taimen UCM values).
+  - [x] Speaker: Porthole's TAS2557 driver parses walleye's vendor firmware (2017_04_06: 2 PLLs, 2 programs, 19 configurations).
   - Gate: `arecord` 5 s from the bottom mic and `aplay` it back on the speaker; copy the WAV to the Mac and it is clearly audible.
+  - [x] Objective gate (test 50): speaker plays a 440 Hz tone while DMIC1 records: 440 Hz at amplitude ~1200 (silence before: rms 1), from boot-time routes only. Owner listening check + flash still to do.
 
 - [ ] **P8.7** GPU: Adreno 540 with the open driver (owner request 2026-11-18). Estimate 2-4 h if Porthole's wahoo GPU setup carries over.
   - State: our walleye DT has `&adreno_gpu { status = "disabled"; }` (console did not need it). Porthole's shared wahoo DT (0027) already enables it with a zap-shader memory region, and a5xx fixes (0005, 0030-0034, 0067); taimen runs GTK/Chromium on it.
