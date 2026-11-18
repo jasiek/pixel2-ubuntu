@@ -183,9 +183,9 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
     - [x] Video at full frame rate: rotation in the MP4 track matrix, not videoflip (15-16 fps). Photos: EXIF Orientation 8 (videoflip on 9 MP stalled the pipeline: only the first, black frame got encoded).
     - [x] Rear rails switched by the driver (patch 0004, test 43): chip-ID read retried (the first CCI transfer after power-up times out early in boot); OIS runtime-PM-linked to imx362, on only while streaming. Idle saving +15-20 mA USB input (~80 mW).
     - [x] Per-phone lens shading: `pixel2-camera-tuning` writes the Lsc grid from this phone's OTP (front at24, rear OIS flash) to /usr/local/etc/libcamera/ipa/simple.
-    - [ ] Flash LED + laser ToF (M6 rest): DT added, needs a boot test.
+    - [x] Flash LED + laser ToF (M6 rest, test 44): white:flash torch +133 mA; VL53L0 reads 129-131 mm (polled; IRQ pin has no live pull-up). boot_b reflashed with all of the above.
     - [ ] Needs owner: front colour cast (grey/white reference shot) and rear mirroring (text in view).
-    - [ ] `reboot bootloader` sometimes boots normally (seen again in test 43: `systemctl reboot --reboot-argument=bootloader` too, once).
+    - [ ] `reboot bootloader` sometimes boots normally: test 43/44 saw it 2 of 3 times from a tethered `fastboot boot` session, never from the flashed boot.
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
