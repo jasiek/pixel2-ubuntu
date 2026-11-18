@@ -38,6 +38,8 @@ You need: an Apple Silicon Mac with Docker running, `adb` + `fastboot` (`brew in
    diskutil info /Volumes/Pixel2Dev | grep Personality   # must say "Case-sensitive APFS"
    ```
    It mounts at `/Volumes/Pixel2Dev` and stays mounted across reboots. (GUI: Disk Utility → select the container → **+** → Format "APFS (Case-sensitive)".) A full build needs about 60 GB free.
+
+   Docker must be able to see the volume. Colima shares only your home folder by default: `colima start --mount "$HOME:w" --mount /Volumes/Pixel2Dev:w` (saved for later starts). Docker Desktop: Settings → Resources → File sharing. The build checks this before it starts.
 2. Clone onto it:
    ```sh
    cd /Volumes/Pixel2Dev

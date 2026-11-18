@@ -63,7 +63,7 @@ hdr "Docker"
 if ! command -v docker >/dev/null 2>&1; then
     printf '  --    skipped (no docker)\n'
 elif ! docker info >/dev/null 2>&1; then
-    bad "Docker is not running: start Docker Desktop"
+    bad "Docker is not running: start it (Docker Desktop, colima start, or OrbStack)"
 else
     ok "Docker is running"
     arch=$(docker info --format '{{.Architecture}}' 2>/dev/null)
@@ -72,15 +72,21 @@ else
     mem=$(docker info --format '{{.MemTotal}}' 2>/dev/null); mem_gb=$(( ${mem:-0} / 1073741824 ))
     if [ "$mem_gb" -ge 6 ]; then ok "Docker memory ${mem_gb} GB"
     else soft "Docker has ${mem_gb} GB memory; builds were tested with 8 GB (Docker Desktop > Settings > Resources)"; fi
-    # The repo must be visible inside containers (Docker Desktop file sharing).
+    # The repo must be visible inside containers. Docker's VM only sees the
+    # host folders it shares (Colima: just $HOME by default); for any other
+    # path, -v quietly mounts an empty directory.
     if docker image inspect ubuntu:24.04 >/dev/null 2>&1 || docker pull -q ubuntu:24.04 >/dev/null 2>&1; then
         if docker run --rm -v "$PWD":/w:ro ubuntu:24.04 test -f /w/scripts/check-prereqs.sh 2>/dev/null; then
             ok "containers can see this folder"
         else
-            bad "containers can't see $PWD: add its volume under Docker Desktop > Settings > Resources > File sharing"
+            vol=$(printf '%s' "$PWD" | cut -d/ -f1-3)
+            bad "containers can't see $PWD (they get an empty folder). Share $vol with Docker's VM:"
+            printf '        Colima:         colima stop; colima start --mount "$HOME:w" --mount %s:w\n' "$vol"
+            printf '        Docker Desktop: Settings > Resources > File sharing, add %s\n' "$vol"
+            printf '        OrbStack:       shares /Volumes already; check Settings > File sharing\n'
         fi
     else
-        bad "can't pull ubuntu:24.04 from Docker Hub (network or login?)"
+        bad "can't pull ubuntu:24.04 from Docker Hub (network, login, or a credsStore helper named in ~/.docker/config.json that isn't installed?)"
     fi
 fi
 
