@@ -18,8 +18,25 @@ export GST_PLUGIN_PATH=/usr/local/lib/aarch64-linux-gnu/gstreamer-1.0
 REAR=/base/soc@0/cci@ca0c000/i2c-bus@0/camera@1a
 FRONT=/base/soc@0/cci@ca0c000/i2c-bus@1/camera@10
 ts=$(date +%Y%m%d-%H%M%S)
-if [ "${PIXEL2_CAMERA_ROTATE:-1}" = 0 ]; then flip=identity
-else flip="videoflip method=counterclockwise"; fi
+# Photos turn the pixels (videoflip). Videos only carry the turn in the MP4
+# track header matrix, because turning every 720p frame on the CPU cut the
+# frame rate from 16 to 11.5 fps; players apply the matrix. mp4mux 1.24
+# ignores the image-orientation tag, so the matrix is written afterwards.
+if [ "${PIXEL2_CAMERA_ROTATE:-1}" = 0 ]; then flip=identity rot=0
+else flip="videoflip method=counterclockwise" rot=1; fi
+
+# Set the tkhd matrix of a 1280-wide single-track MP4 to "rotate 90 degrees
+# counter-clockwise": (x,y) -> (y, 1280-x), i.e. a=0 b=-1 c=1 d=0 ty=1280.
+# mp4mux writes moov after mdat, so the last "tkhd" is the real one; the
+# matrix sits 44 bytes after the name in a version-0 tkhd.
+mp4_rotate_ccw() {
+    off=$(grep -obUa tkhd "$1" | tail -1 | cut -d: -f1)
+    [ -n "$off" ] || { echo "no tkhd in $1, left unrotated" >&2; return 0; }
+    ver=$(dd if="$1" bs=1 skip=$((off + 4)) count=1 2>/dev/null | od -An -tu1 | tr -d ' ')
+    [ "$ver" = 0 ] || { echo "tkhd v$ver in $1, left unrotated" >&2; return 0; }
+    printf '\000\000\000\000\377\377\000\000\000\000\000\000\000\001\000\000\000\000\000\000\000\000\000\000\000\000\000\000\005\000\000\000\100\000\000\000' \
+        | dd of="$1" bs=1 seek=$((off + 44)) conv=notrunc 2>/dev/null
+}
 cam_of() { case "${1:-rear}" in rear) echo $REAR ;; front) echo $FRONT ;; *) echo "rear or front, not '$1'" >&2; exit 2 ;; esac; }
 
 case "${1:-}" in
@@ -47,11 +64,12 @@ photo)
 video)
     c=$(cam_of "${2:-rear}"); secs=${3:-10}; out=${4:-video-$ts.mp4}
     gst-launch-1.0 -q -e libcamerasrc camera-name="$c" \
-        ! video/x-raw,width=1280,height=720 ! videoconvert ! video/x-raw,format=I420 ! $flip ! queue \
+        ! video/x-raw,width=1280,height=720 ! videoconvert ! video/x-raw,format=I420 ! queue \
         ! x264enc speed-preset=ultrafast tune=zerolatency bitrate=6000 \
         ! mp4mux ! filesink location="$out" >/dev/null 2>&1 &
     pid=$!
     sleep "$secs"; kill -INT $pid; wait $pid || true
+    [ "$rot" = 1 ] && mp4_rotate_ccw "$out"
     echo "$out" ;;
 *)
     sed -n 2,8p "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
