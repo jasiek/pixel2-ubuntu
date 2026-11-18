@@ -2,7 +2,7 @@
 
 **Goal:** the Pixel 2 (walleye) powers on straight into Ubuntu 24.04 arm64, reachable over SSH. No Android at runtime.
 
-## ▶ RESUME HERE: P8.5 lit-scene check (needs owner: light + point the phone), then camera follow-ups. Waiting: P9.2 gate (someone else flashes a phone). Waiting: P9.2 gate. Also open: pick the phone's job
+## ▶ RESUME HERE: P8.5 orientation shot (needs owner: phone upright in portrait, page of text in front of the rear camera), then camera follow-ups. Waiting: P9.2 gate (someone else flashes a phone). Also open: pick the phone's job
 
 ---
 
@@ -177,6 +177,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [x] _2026-11-17: both cameras work on mainline (docs/camera-walleye.md, tests 36-42)._ Kernel: Porthole's imx179/imx362/CAMSS/Easel/OIS drivers; walleye DT staged M1-M6 (CCI, CAMSS, Easel MIPI bypass, front IMX179, rear IMX362 + OIS + AF). Userspace: libcamera 0.7.2 + Porthole patches (`scripts/build-libcamera.sh`), `pixel2-camera photo|video [rear|front]`. In build-all and flashed (boot_b).
   - [x] Gate (dark room): front photo 3200x2400 JPEG (colours right) and 1280x720 H.264 MP4, copied to the Mac.
   - [ ] Check in a lit scene: rear photo, video quality (dark-room video was all gain noise), orientation/mirroring (front image looked mirrored).
+    - _2026-11-18: rear photo sharp + well exposed once `pixel2-camera` waits for the soft-ISP AF lock (~17 s); video 1280x720 16 fps, now 4:2:0 (was High 4:4:4, undecodable on the Mac). Front is NOT mirrored (a projected clock reads right). Open: rotation -- both sensors report 270; needs a known-pose shot (phone upright in portrait, text in view) to set rear/front `rotation` and rotate output to portrait._
   - [ ] Follow-ups: rear rails are always on (driver-switched rails → chip ID -110); flash LED and laser ToF (M6 rest) not enabled; Easel modules make `reboot bootloader` unreliable? (see log).
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
