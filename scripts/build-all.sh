@@ -174,13 +174,13 @@ if [ "$MAINLINE" != 0 ]; then
 
     H_MBOOT=$(hash_of scripts/build-mainline-bootimg.sh scripts/make-bootimg.sh "@$H_MKERNEL" "@$H_INITRAMFS")
     step mainline-bootimg build/mainline/boot-mainline.img "$H_MBOOT" scripts/build-mainline-bootimg.sh
-    H_LIBCAMERA=$(hash_of scripts/build-libcamera.sh docker/libcamera camera/tuning "@$(git -C external/libcamera rev-parse HEAD)" \
+    H_LIBCAMERA=$(hash_of scripts/build-libcamera.sh docker/libcamera "@$(git -C external/libcamera rev-parse HEAD)" \
         "@$(git -C external/porthole-pmaports rev-parse HEAD)")
     step libcamera build/libcamera/root/usr/local/bin/cam "$H_LIBCAMERA" scripts/build-libcamera.sh
     H_ML="@$H_MTOOLS $H_MFW $H_MKERNEL $H_MBOOT $H_LIBCAMERA"
 fi
 
-H_ROOTFS=$(hash_of rootfs scripts/build-rootfs.sh build/wifi.ssid build/wifi.pass build/ssh/pixel2_ed25519.pub \
+H_ROOTFS=$(hash_of rootfs scripts/build-rootfs.sh camera/tuning build/wifi.ssid build/wifi.pass build/ssh/pixel2_ed25519.pub \
     "@$(cat ~/.ssh/*.pub 2>/dev/null | sort -u)" \
     "@$H_KERNEL" "@$H_STUBS" "@$H_QBOOTCTL" "@$H_SCREEN" "$H_ML")
 step rootfs build/rootfs.simg "$H_ROOTFS" env MAINLINE="$MAINLINE" scripts/build-rootfs.sh

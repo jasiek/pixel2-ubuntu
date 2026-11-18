@@ -82,6 +82,15 @@ if [ "${MAINLINE:-1}" != 0 ] && [ -d "$ML" ] && [ -f build/mainline/boot-mainlin
     install -m 644 build/mainline/boot-mainline.img "$R/boot/boot-mainline.img"
     # Camera (P8.5): libcamera + cam + GStreamer libcamerasrc (build-libcamera.sh).
     cp -a build/libcamera/root/usr/local/. "$R/usr/local/"
+    # Sensor tuning: Porthole's taimen files, unless camera/tuning/ has a
+    # walleye one (imx179: Bayes AWB on walleye's vendor locus). Installed
+    # here, not in build-libcamera.sh, so a tuning edit doesn't recompile.
+    # pixel2-camera-tuning puts each phone's own lens shading on top at boot.
+    for t in imx179 imx362; do
+        src=external/porthole-pmaports/temp/libcamera/$t.yaml
+        [ -f "camera/tuning/$t.yaml" ] && src=camera/tuning/$t.yaml
+        install -Dm644 "$src" "$R/usr/local/share/libcamera/ipa/simple/$t.yaml"
+    done
     chroot "$R" ldconfig
     echo "mainline $MKREL included"
 fi
