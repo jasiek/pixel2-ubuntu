@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Same wifi MAC on both kernels, so the router hands out the same IP.
 # 4.4 gets the phone's real MAC through Android's cnss-daemon; mainline
 # ath10k gets none from the WCN3990 firmware and makes up a random one each

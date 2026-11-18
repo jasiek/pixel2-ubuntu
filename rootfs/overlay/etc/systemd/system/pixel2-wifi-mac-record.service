@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Kernel 4.4 only (P8.3.6): save wlan0's real MAC for the mainline kernel
 # (usr/local/sbin/pixel2-wifi-mac record; /var/lib/pixel2/wlan0.mac, phone only).
 [Unit]

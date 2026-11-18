@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # print "<offset> <size> <method>" of apex_payload.img inside an .apex (zip)
 open(my $f, '<:raw', $ARGV[0]) or die; local $/; my $d = <$f>;
 my $pos = 0;

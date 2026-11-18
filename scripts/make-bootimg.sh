@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Pack a Pixel 2 boot.img (header v0) with the same layout as the stock one.
 # Values come from docs/device-info.md (P2.4).
 #

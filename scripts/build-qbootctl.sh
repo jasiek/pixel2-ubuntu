@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build qbootctl (external/qbootctl, linux-msm) -> build/qbootctl/qbootctl
 # Static, so the 20.04 build container's glibc doesn't matter on 24.04.
 # Used by pixel2-boot-successful.service to mark the A/B slot successful;

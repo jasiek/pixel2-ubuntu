@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build the Pixel 2 (walleye) kernel from external/kernel-msm.
 #
 #   scripts/build-kernel.sh              # wahoo_defconfig + kernel/walleye-ubuntu.config

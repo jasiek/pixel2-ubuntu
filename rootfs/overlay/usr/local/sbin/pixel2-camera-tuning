@@ -1,4 +1,5 @@
 #!/usr/bin/python3 -I
+# SPDX-License-Identifier: MIT
 """Per-phone lens-shading tables for the soft-ISP (P8.5).
 
 The shipped tuning files (imx179.yaml, imx362.yaml from Porthole) carry the

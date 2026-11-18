@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Build environment for the mainline kernel experiment (P8.3).
 # Kernel 7.x needs LLVM >= 18 (Porthole builds with LLVM=1, clang 22), newer
 # than the 20.04 container used for the downstream 4.4 kernel

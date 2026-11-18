@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """Run a shell command in the phone's initramfs debug shell (telnet, port 23).
 
     scripts/initrd-sh.py 'cat /tmp/init.log'

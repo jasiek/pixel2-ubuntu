@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build stub libraries for Android (bionic) vendor daemons -> build/android-stubs/
 # Freestanding (no libc), so no NDK is needed: clang targets aarch64 Android
 # and lld links a plain shared object.

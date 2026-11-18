@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Keep the battery between LOW and HIGH percent when the phone lives on a
 # charger (a Li-ion cell held at 100% ages fast and can swell).
 # Charging stops but USB keeps powering the phone, on both kernels:

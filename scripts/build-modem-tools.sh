@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build the modem/wifi helper tools for the mainline kernel (P8.3 wifi):
 #   build/modem-tools/pil-squasher   merges split .mdt/.bNN firmware into one .mbn
 #   build/modem-tools/diag-router    drains the modem's DIAG channel (without it

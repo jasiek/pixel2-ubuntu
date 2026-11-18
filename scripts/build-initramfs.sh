@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build the initramfs: static busybox + initramfs/init -> build/initramfs.cpio.gz
 #   scripts/build-initramfs.sh [init-script] [output]   (e.g. initramfs/probe-init build/initramfs-probe.cpio.gz)
 set -euo pipefail

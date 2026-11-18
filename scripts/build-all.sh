@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build everything the phone needs, from a fresh clone:
 #   build/boot.img      kernel + initramfs (flash to boot_a/boot_b)
 #   build/rootfs.simg   Ubuntu 24.04 (flash to userdata)

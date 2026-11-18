@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Qualcomm WLAN helper: downloads the board data file (bdwlan.*) to the WLAN
 # firmware and sends it the MAC address. The firmware only reports
 # "FW ready" (and wlan.ko only probes, creating wlan0) after this.

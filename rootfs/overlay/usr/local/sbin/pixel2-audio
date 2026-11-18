@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Default audio routes for the Pixel 2 (walleye) sound card (P8.6), so plain
 # ALSA works after boot:
 #   aplay -D hw:0,0 file.wav                     speakers (TAS2557 pair)

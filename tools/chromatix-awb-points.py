@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT AND BSD-2-Clause
 """Print the AWB reference points of a Qualcomm chromatix 3A library (P8.5).
 
     tools/chromatix-awb-points.py libchromatix_<sensor>_pixel_res0_snapshot_3a.so
@@ -22,6 +23,11 @@ def data_section(f):
         name = d[strtab + s[0]: d.index(b'\0', strtab + s[0])].decode()
         if name == '.data':
             return d[s[4]: s[4] + s[5]]
+
+# cct() follows libcamera's estimateCCT() (src/ipa/libipa/colours.cpp):
+#   SPDX-License-Identifier: BSD-2-Clause
+#   Copyright (C) 2024, Ideas on Board Oy
+# Full license text: LICENSES/BSD-2-Clause.txt. The rest of this file is MIT.
 def cct(r, g, b):
     m = [[-0.14282, 1.54924, -0.95641], [-0.32466, 1.57837, -0.73191], [-0.68202, 0.77073, 0.56332]]
     x, y, z = (m[i][0] * r + m[i][1] * g + m[i][2] * b for i in range(3)); t = x + y + z; x, y = x / t, y / t

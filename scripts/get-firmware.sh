@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Get the Pixel 2 factory image that the build and flashing need -> firmware/
 #
 #   scripts/get-firmware.sh

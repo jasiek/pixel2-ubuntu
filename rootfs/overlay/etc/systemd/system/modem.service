@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Boot the modem DSP and keep it up: the kernel powers a subsystem while
 # /dev/subsys_<name> is open (Android's pm-service does this). The WLAN
 # firmware runs on the modem, so wifi needs this.

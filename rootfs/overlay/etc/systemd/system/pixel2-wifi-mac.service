@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Mainline kernel only (P8.3.6): wlan0 gets the MAC that 4.4 recorded
 # (usr/local/sbin/pixel2-wifi-mac). Type=simple: NetworkManager waits only
 # for the "hold" step, not for wlan0.

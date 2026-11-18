@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 [Unit]
 Description=Mainline modem/wifi firmware from the phone's own partitions
 After=vendor.service android-env.service

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # USB link to the Mac. "shared" = NetworkManager runs a DHCP server here,
 # so the Mac gets 172.16.42.x automatically. Phone is 172.16.42.1.
 [connection]

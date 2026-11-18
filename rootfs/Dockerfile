@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Ubuntu 24.04 arm64 root filesystem for the Pixel 2 (walleye).
 # Built with `docker build`, then exported and packed into an ext4 image by
 # scripts/build-rootfs.sh. The official ubuntu:24.04 image is ubuntu-base

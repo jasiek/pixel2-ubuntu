@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Run a command inside the arm64 build container with the repo at /work.
 #   scripts/dev.sh uname -m
 #   scripts/dev.sh            # interactive shell

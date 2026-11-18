@@ -1,4 +1,5 @@
 #!/bin/busybox sh
+# SPDX-License-Identifier: MIT
 # Pixel 2 (walleye) initramfs: find the userdata partition (= Ubuntu root),
 # then switch_root into systemd.
 #

@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Mount the active slot's Android vendor partition read-only at /vendor.
 # The kernel loads firmware from /vendor/firmware (firmware_class.path).
 set -e

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Build outputs (kernel, initramfs, rootfs, boot images)
 build/
 out/

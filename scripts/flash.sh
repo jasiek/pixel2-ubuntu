@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Guided flashing: stock Pixel 2 (walleye) -> Ubuntu 24.04.
 #
 #   scripts/flash.sh           # install Ubuntu (erases the phone)

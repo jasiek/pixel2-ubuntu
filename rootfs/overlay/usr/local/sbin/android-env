@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Prepare the minimal Android environment that the vendor modem/wifi daemons
 # (rmt_storage, tftp_server, pd-mapper; all bionic binaries) need on Ubuntu:
 #   /system, /apex/...   Android linker + libraries (from system$slot, read-only)

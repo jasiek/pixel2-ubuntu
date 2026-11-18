@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Find which kernel module hangs a boot (P8.3 dev tool). Run from the
 # initramfs debug shell (cmdline "initdebug"), as root:
 #   sh /newroot/var/lib/pixel2/mod-bisect.sh        (after mounting userdata)

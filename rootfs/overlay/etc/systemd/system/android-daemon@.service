@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Run an Android vendor daemon (/vendor/bin/%i) with the bionic runtime.
 [Unit]
 Description=Android vendor daemon %i

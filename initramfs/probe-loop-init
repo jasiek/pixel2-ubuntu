@@ -1,4 +1,5 @@
 #!/bin/busybox sh
+# SPDX-License-Identifier: MIT
 # Probe init, "flight recorder" variant (P8.3): for kernels that reset within
 # seconds. Mounts userdata as soon as UFS appears and rewrites
 # /mainline-probe/loop.txt (dmesg, synced) every 0.5 s for 60 s, then

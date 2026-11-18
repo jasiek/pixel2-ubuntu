@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Text console on the screen (tools/pixel2-screen.c): clears the bootloader
 # splash at boot, then dark; touch or a volume key shows the console
 # (/usr/local/bin/pixel2-console), dark again after IDLE seconds.

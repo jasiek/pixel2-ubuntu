@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 [submodule "external/mkbootimg"]
 	path = external/mkbootimg
 	url = https://android.googlesource.com/platform/system/tools/mkbootimg

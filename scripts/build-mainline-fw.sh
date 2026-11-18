@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # ath10k (WCN3990) files for the mainline kernel, baked into the rootfs (P8.3):
 #   build/mainline/fw/ath10k/board-2.bin     walleye's bdwlan.bin/.b09/.b80
 #       from the factory vendor.img (firmware/, scripts/get-firmware.sh),

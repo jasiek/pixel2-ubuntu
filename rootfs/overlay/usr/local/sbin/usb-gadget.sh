@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # USB gadget: NCM network (macOS/Linux native) + ACM serial console.
 # Idempotent: the initramfs creates the same gadget; this keeps it if present.
 set -e

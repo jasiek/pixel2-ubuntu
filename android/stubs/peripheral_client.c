@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /*
  * Stub libperipheral_client.so for Android vendor daemons on Ubuntu.
  *

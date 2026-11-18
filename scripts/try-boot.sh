@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Tethered-boot an image and report whether our system came up over USB.
 #
 #   scripts/try-boot.sh build/boot-debug.img [timeout_s]

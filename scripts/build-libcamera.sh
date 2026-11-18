@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # libcamera for the phone (P8.5): external/libcamera (v0.7.2) + the patches
 # Porthole carries for msm8998 (IMX179/IMX362 sensor properties, soft-ISP
 # AGC/AWB/CCM/LSC/focus) and its tuning files for both sensors.

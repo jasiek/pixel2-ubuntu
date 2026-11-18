@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# SPDX-License-Identifier: MIT
 # Minimal stand-in for Android's logd: receive liblog datagrams on
 # /dev/socket/logdw and print them to stdout (-> journald).
 # Packet: u8 log_id, u16 tid, u32 sec, u32 nsec, then for text logs

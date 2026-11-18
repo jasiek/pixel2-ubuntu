@@ -28,6 +28,10 @@ Pixel 2 (walleye) running plain headless Ubuntu 24.04. Mainline kernel 7.2.2
 - End with `Co-Authored-By: Claude ...` only. **Never** include Claude session
   references (no `Claude-Session:` line, no session URLs or IDs).
 - Don't push unless asked.
+- New files get an `SPDX-License-Identifier` header: MIT for original work,
+  GPL-2.0-only for kernel patches/DTs, upstream terms for anything borrowed
+  (credit it, see `LICENSING.md`). Check with `reuse lint` (pip
+  `reuse[charset-normalizer]` in a python container).
 - Third-party software goes in a pinned submodule under `external/`. Never an
   ad-hoc clone or a `git clone` in a Dockerfile.
 

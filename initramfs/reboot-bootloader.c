@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /* Reboot straight into fastboot: reboot(2) with RESTART2 + "bootloader".
  * busybox's reboot can't pass a reboot argument. */
 #include <linux/reboot.h>

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build tools/pixel2-screen.c (static arm64) -> build/screen/pixel2-screen.
 # The font is cut from the kernel submodule (lib/fonts/font_8x16.c, the VGA
 # font in CP437 order, matching the VT's glyph codes), so no font file is

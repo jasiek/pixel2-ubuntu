@@ -1,4 +1,5 @@
 #!/bin/busybox sh
+# SPDX-License-Identifier: MIT
 # Probe init for kernel bring-up (P8.3, mainline): no USB console needed.
 # Writes kernel logs to /mainline-probe/ on the userdata ext4 filesystem,
 # then reboots into fastboot. Read them afterwards from the normal Ubuntu.

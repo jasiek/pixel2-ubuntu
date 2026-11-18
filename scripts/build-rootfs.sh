@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build the Ubuntu 24.04 root filesystem image for the phone.
 #
 #   scripts/build-rootfs.sh

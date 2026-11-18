@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Dev helper (P8.3): put everything the mainline kernel needs on the running
 # phone's rootfs (downstream Ubuntu is fine; nothing here runs on kernel 4.4),
 # then test with `fastboot boot build/mainline/boot-mainline.img`.

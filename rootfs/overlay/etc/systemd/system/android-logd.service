@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 [Unit]
 Description=Android log socket (/dev/socket/logdw) -> journal
 Before=android-env.service

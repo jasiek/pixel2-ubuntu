@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Pack build/mainline/boot-mainline.img = mainline Image.gz + walleye DTB +
 # our initramfs (P8.3). Test with `fastboot boot`, nothing flashed.
 #

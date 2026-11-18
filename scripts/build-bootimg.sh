@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Pack build/boot.img = our kernel + our initramfs + Ubuntu cmdline additions.
 #   scripts/build-bootimg.sh            # normal boot into Ubuntu
 #   DEBUG=1 scripts/build-bootimg.sh    # stop in the initramfs debug shell

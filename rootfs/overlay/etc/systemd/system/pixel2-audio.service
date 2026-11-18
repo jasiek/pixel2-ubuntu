@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 [Unit]
 Description=Pixel 2 default audio routes: speakers + bottom mic (P8.6)
 After=sound.target alsa-restore.service

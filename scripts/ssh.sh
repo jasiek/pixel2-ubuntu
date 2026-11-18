@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # SSH into the phone's Ubuntu over USB (or pass another host via PIXEL2_HOST).
 #   scripts/ssh.sh                 # interactive shell
 #   scripts/ssh.sh 'uptime'        # run a command

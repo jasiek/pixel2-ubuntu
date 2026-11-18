@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # What the screen shows (run by pixel2-screen on a pseudo-terminal sized to
 # the display): a status header, then the newest journal lines. Redrawn every
 # REFRESH seconds; pixel2-screen only repaints characters that changed.

@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Build the mainline kernel's modem + wifi firmware from this phone's own
 # Android partitions (P8.3; blobs never leave the phone, never in git).
 # Runs on either kernel, before rmtfs. Skips if already done for this source.

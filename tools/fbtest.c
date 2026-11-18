@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /* fbtest: draw colour bars into /dev/fb0 via mmap + FBIOPAN_DISPLAY.
  * mdss_fb only allocates framebuffer memory on mmap (write() returns ENODEV),
  * so this is the minimal "can we draw" test for the walleye panel.

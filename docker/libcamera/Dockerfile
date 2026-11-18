@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Builds libcamera (external/libcamera + Porthole's patches) for the phone's
 # Ubuntu 24.04 arm64 (P8.5). Same base as the rootfs, so the binaries link
 # against the phone's own libraries.

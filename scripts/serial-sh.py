@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """Run a command on the phone's USB serial console (ACM, /dev/cu.usbmodempixel2*).
 
     scripts/serial-sh.py 'dmesg | tail'

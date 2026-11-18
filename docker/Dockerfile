@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Build environment for the Pixel 2 (walleye) Ubuntu port.
 # Runs natively as arm64 on Apple Silicon: no QEMU, no cross-compiler for the
 # main kernel. The stock kernel was built with Android clang 11.0.1, so we

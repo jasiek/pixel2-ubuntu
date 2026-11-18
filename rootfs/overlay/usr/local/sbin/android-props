@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# SPDX-License-Identifier: MIT
 # Build a read-only Android property area at /dev/__properties__ so the
 # vendor (bionic) daemons we run for the modem/wifi can read properties.
 #

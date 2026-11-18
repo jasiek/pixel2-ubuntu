@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Build the mainline kernel experiment for walleye (P8.3).
 #
 #   scripts/build-mainline.sh

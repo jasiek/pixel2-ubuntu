@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # "Phone is on" indicator: the RGB notification LED pulses dim green (never
 # fully dark) once Ubuntu is up, and goes dark at shutdown.
 #

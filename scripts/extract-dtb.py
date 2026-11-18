@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """Copy the device tree appended to a boot.img's kernel into its own file.
 
     scripts/extract-dtb.py firmware/boot.img build/factory.dtb

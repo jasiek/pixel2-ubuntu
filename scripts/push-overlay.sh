@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Copy rootfs/overlay onto the running phone (no reflash) and reload systemd.
 # For quick iteration; the next scripts/build-rootfs.sh bakes it in properly.
 # Also sets the phone's clock from the Mac (it has no RTC sync until wifi/NTP).

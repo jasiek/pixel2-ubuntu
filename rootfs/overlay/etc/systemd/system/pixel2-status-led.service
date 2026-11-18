@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Dim green pulse (never fully dark) = Ubuntu is up. Dark = off, booting or shutting down.
 [Unit]
 Description=Status LED: pulse green while the system is up

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /*
  * pixel2-screen: text console on the Pixel 2 OLED, dark after IDLE seconds,
  * touch (or a volume key) wakes it.

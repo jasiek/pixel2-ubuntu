@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Take pictures and videos with the Pixel 2 cameras (P8.5, mainline kernel).
 #   pixel2-camera photo [rear|front] [file.jpg]        (default rear, ./photo-<time>.jpg)
 #   pixel2-camera video [rear|front] [seconds] [file.mp4]  (default rear, 10 s)

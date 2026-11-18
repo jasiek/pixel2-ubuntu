@@ -1,0 +1,43 @@
+# Machine-readable licensing (https://reuse.software). Human version:
+# LICENSING.md; per-file provenance: docs/licensing-inventory.md.
+# A file's own SPDX header wins over these defaults ("closest").
+version = 1
+
+# Default for original material: MIT.
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 The ubuntu-touch-pixel2 contributors"
+SPDX-License-Identifier = "MIT"
+
+# Documentation and the license overview: prose, no header possible
+# without breaking Markdown headings.
+[[annotations]]
+path = ["**/*.md", "LICENSE"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 The ubuntu-touch-pixel2 contributors"
+SPDX-License-Identifier = "MIT"
+
+# Kernel patches modify GPL-2.0 files (Linux, Porthole's drivers); the
+# patch format has no place for a header.
+[[annotations]]
+path = ["kernel/patches/*.patch", "kernel/debug/*.patch", "kernel/mainline/patches/*.patch"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 The ubuntu-touch-pixel2 contributors"
+SPDX-License-Identifier = "GPL-2.0-only"
+
+# Device trees: GPL-2.0-only headers in the files. They also carry values
+# from the vendor walleye/taimen DTs (Google, HTC, LG, Qualcomm; GPL-2.0)
+# and build on Porthole's msm8998 DTs.
+[[annotations]]
+path = ["kernel/mainline/*.dts", "kernel/mainline/*.dtsi"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 The ubuntu-touch-pixel2 contributors"
+SPDX-License-Identifier = "GPL-2.0-only"
+
+# Adapted from Porthole's taimen audio DT (patch 0084).
+[[annotations]]
+path = "kernel/mainline/walleye-audio.dtsi"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Giuseppe Maggio"
+SPDX-License-Identifier = "GPL-2.0-only"
