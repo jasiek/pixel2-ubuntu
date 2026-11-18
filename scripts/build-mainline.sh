@@ -38,7 +38,10 @@ if [ ! -f /.dockerenv ]; then
         echo "Copying the kernel tree to build/mainline/src"
         rm -rf build/mainline/src build/mainline/out
         mkdir -p build/mainline
-        cp -c -R external/linux-mainline build/mainline/src   # APFS clone: fast, no extra space
+        # Clone, not copy, where the filesystem can: fast, no extra space.
+        # BSD cp (macOS, APFS) spells it -c; GNU cp (Linux) --reflink=auto.
+        if [ "$(uname -s)" = Darwin ]; then CLONE=-c; else CLONE=--reflink=auto; fi
+        cp $CLONE -R external/linux-mainline build/mainline/src
         rm -f build/mainline/src/.git
         scripts/dev.sh /work/scripts/build-mainline.sh patch
         echo "$want" > build/mainline/src/.porthole
