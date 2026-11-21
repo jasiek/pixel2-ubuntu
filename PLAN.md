@@ -207,13 +207,13 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [x] Userspace: Mesa 25.2 (noble-updates) freedreno: eglinfo GBM renderer "FD540"; kmscube 120 frames in 1.92 s (60 Hz vsync). `kmscube -A` stalls on this command-mode panel (not the GPU).
   - [x] Power: runtime-suspended when idle (active 1.2 s of 119 s after kmscube).
   - [x] Gate: an OpenGL ES test renders on the GPU (renderer string "FD540"), not llvmpipe.
-- [ ] **P8.8** Hardware H.264 + HEVC encode (venus) (owner request 2026-11-21). Estimate 1-2 h: Porthole's venus series (0178-0233) already makes it work on taimen and is in our kernel; walleye only lacks the DT node and the firmware.
+- [x] **P8.8** _Done 2026-11-21: venus H.264/HEVC encode, flashed to boot_b (tests 56-72)._ Hardware H.264 + HEVC encode (venus) (owner request 2026-11-21). Estimate 1-2 h: Porthole's venus series (0178-0233) already makes it work on taimen and is in our kernel; walleye only lacks the DT node and the firmware.
   - [x] Firmware: pixel2-modem-fw squashes /vendor/firmware/venus.mdt into qcom/venus-4.4/venus.mbn (staged on the phone).
   - [x] DT: `&venus { status = "okay"; }`; tethered boot (`boot-venus.img`): venus probes, /dev/video* encoder + decoder nodes, no wedge. _Test 56._
   - [x] Encode: GStreamer `v4l2h264enc` and `v4l2h265enc` (videotestsrc -> MP4), files play on the Mac. _Tests 57-69: patches 0005 (no CREATE_BUFS mid-stream: firmware crash), 0006 (every I-frame an IDR: seeking), 0007 (rate control ignores timestamps: bitrate). 720p at 57 fps, bitrate within 5 %._
   - [x] `pixel2-camera video` uses the hardware H.264 encoder (was x264enc on the CPU). _Test 70._
   - [x] build-all, flash boot_b (owner OK 2026-11-21). _Test 71._
-  - [ ] Gate: lit-scene video looks right.
+  - [x] Gate: lit-scene video looks right. _Test 72: terminal text on a monitor readable, not mirrored (Vision OCR)._
   - Open: a crashed venus firmware resets the phone (Porthole 0198: no restart in a boot).
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
