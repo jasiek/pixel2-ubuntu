@@ -1,0 +1,46 @@
+From: pixel2 ubuntu port
+Subject: [PATCH] media: venus: venc: HFI 3xx CFR rate control must ignore timestamps
+
+On msm8998 the encoder ignored the target bitrate: a 1280x720 test
+pattern came out at ~16 Mbps whether V4L2_CID_MPEG_VIDEO_BITRATE was
+1 or 6 Mbps, VBR or CBR, while fixed QPs (rate control off) and a
+raised minimum QP did change the size (pixel2 test 68). Rate control
+was holding QP at its floor.
+
+The 3xx firmware's rate control derives the per-frame budget from the
+input timestamp deltas unless HFI_PROPERTY_PARAM_VENC_DISABLE_RC_TIMESTAMP
+is set (downstream exposes this as RATE_CONTROL_TIMESTAMP_MODE).
+GStreamer's v4l2 encoders put the frame number in tv_sec, so frames
+look 1 s apart and every frame gets a full second's worth of bits.
+
+In the CFR modes the frame rate is the one set with S_PARM; tell the
+firmware to use it instead of the timestamps.
+
+---
+--- a/drivers/media/platform/qcom/venus/venc.c
++++ b/drivers/media/platform/qcom/venus/venc.c
+@@ -840,6 +840,24 @@
+ 	ret = hfi_session_set_property(inst, ptype, &rate_control);
+ 	if (ret)
+ 		return ret;
++
++	/*
++	 * HFI 3xx rate control budgets each frame from the input timestamp
++	 * deltas unless told not to. V4L2 timestamps are opaque cookies
++	 * (GStreamer puts the frame number in tv_sec, 1 s apart), so the
++	 * target bitrate was ignored. The CFR modes take the rate from
++	 * S_PARM; let the firmware use that.
++	 */
++	if (IS_V3(inst->core) &&
++	    (rate_control == HFI_RATE_CONTROL_VBR_CFR ||
++	     rate_control == HFI_RATE_CONTROL_CBR_CFR)) {
++		struct hfi_enable en = { .enable = 1 };
++
++		ptype = HFI_PROPERTY_PARAM_VENC_DISABLE_RC_TIMESTAMP;
++		ret = hfi_session_set_property(inst, ptype, &en);
++		if (ret)
++			return ret;
++	}
+ 
+ 	if (rate_control == HFI_RATE_CONTROL_CQ && ctr->const_quality) {
+ 		struct hfi_heic_frame_quality quality = {};
