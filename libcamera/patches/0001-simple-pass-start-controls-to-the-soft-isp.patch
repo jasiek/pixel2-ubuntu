@@ -1,0 +1,65 @@
+From: pixel2 ubuntu port
+Subject: [PATCH] pipeline: simple: pass start() controls to the soft ISP
+
+SimplePipelineHandler::start() ignored its controls, and the soft ISP
+IPA's start() takes none, so controls given to Camera::start() never
+reached the IPA. libcamerasrc sets FrameDurationLimits from the caps'
+framerate that way: a 30/1 request was dropped and the AGC kept its
+default 1/15 s frame ceiling, giving 15 fps in dim light (pixel2 test 74).
+
+Keep the start controls and merge them into the first request queued
+to the soft ISP (the request's own values win).
+
+---
+--- a/src/libcamera/pipeline/simple/simple.cpp
++++ b/src/libcamera/pipeline/simple/simple.cpp
+@@ -349,6 +349,8 @@
+ 	std::map<PixelFormat, std::vector<const Configuration *>> formats_;
+ 
+ 	std::unique_ptr<DelayedControls> delayedCtrls_;
++	/* Controls given to start(), for the first request to the soft ISP. */
++	ControlList startControls_;
+ 
+ 	std::vector<std::unique_ptr<FrameBuffer>> conversionBuffers_;
+ 	struct RequestOutputs {
+@@ -1653,13 +1655,20 @@
+ 		return data->video_->exportBuffers(count, buffers);
+ }
+ 
+-int SimplePipelineHandler::start(Camera *camera, [[maybe_unused]] const ControlList *controls)
++int SimplePipelineHandler::start(Camera *camera, const ControlList *controls)
+ {
+ 	SimpleCameraData *data = cameraData(camera);
+ 	V4L2VideoDevice *video = data->video_;
+ 	V4L2Subdevice *frameStartEmitter = data->frameStartEmitter_;
+ 	int ret;
+ 
++	/*
++	 * The soft ISP IPA takes no controls at start(); hand them over with
++	 * the first request instead, so that e.g. FrameDurationLimits from
++	 * libcamerasrc's framerate reaches the AGC.
++	 */
++	data->startControls_ = controls ? *controls : ControlList();
++
+ 	const MediaPad *pad = acquirePipeline(data);
+ 	if (pad) {
+ 		LOG(SimplePipeline, Info)
+@@ -1787,8 +1796,16 @@
+ 	data->frameInfo_.create(request, metadataRequired);
+ 	if (data->useConversion_) {
+ 		data->conversionQueue_.push({ request, std::move(buffers) });
+-		if (data->swIsp_)
+-			data->swIsp_->queueRequest(request->sequence(), request->controls());
++		if (data->swIsp_) {
++			if (data->startControls_.empty()) {
++				data->swIsp_->queueRequest(request->sequence(), request->controls());
++			} else {
++				ControlList ctrls = request->controls();
++				ctrls.merge(data->startControls_);
++				data->startControls_.clear();
++				data->swIsp_->queueRequest(request->sequence(), ctrls);
++			}
++		}
+ 	}
+ 
+ 	return 0;

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 # libcamera for the phone (P8.5): external/libcamera (v0.7.2) + the patches
 # Porthole carries for msm8998 (IMX179/IMX362 sensor properties, soft-ISP
-# AGC/AWB/CCM/LSC/focus).
+# AGC/AWB/CCM/LSC/focus), then ours from libcamera/patches/.
 #
 #   scripts/build-libcamera.sh  ->  build/libcamera/root (installed under /usr/local)
 #
@@ -29,6 +29,12 @@ for f in $(sed -n '/^source=/,/"$/p' "$P/APKBUILD" | grep -o '[0-9]\{4\}-[^ ]*\.
     n=$((n + 1))
 done
 echo "applied $n Porthole patches"
+# Ours on top (libcamera/patches/, in name order).
+for f in /work/libcamera/patches/*.patch; do
+    [ -e "$f" ] || continue
+    patch -d "$SRC" -p1 -s --no-backup-if-mismatch -i "$f"
+    echo "applied $(basename "$f")"
+done
 # A git-less tree: give meson the version instead of running git describe.
 echo 0.7.2 > "$SRC/.tarball-version"
 

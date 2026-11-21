@@ -26,6 +26,13 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 The ubuntu-touch-pixel2 contributors"
 SPDX-License-Identifier = "GPL-2.0-only"
 
+# libcamera patches modify LGPL-2.1-or-later files.
+[[annotations]]
+path = "libcamera/patches/*.patch"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 The ubuntu-touch-pixel2 contributors"
+SPDX-License-Identifier = "LGPL-2.1-or-later"
+
 # Device trees: GPL-2.0-only headers in the files. They also carry values
 # from the vendor walleye/taimen DTs (Google, HTC, LG, Qualcomm; GPL-2.0)
 # and build on Porthole's msm8998 DTs.
