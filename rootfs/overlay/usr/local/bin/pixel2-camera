@@ -9,7 +9,10 @@
 # is kept. The rear waits for the soft-ISP contrast autofocus to log "Scan
 # done" (~9 s: the CPU ISP runs ~5 fps at 3840x2400 and the scan takes ~45
 # frames); the front is fixed-focus and keeps frame 30 (auto-exposure).
-# Video: 1280x720 H.264 (x264, CPU) in MP4, 4:2:0 so any player decodes it.
+# Video: 1280x720 H.264 in MP4, 4:2:0 so any player decodes it. Encoded by
+# venus, the hardware encoder (v4l2h264enc, P8.8); x264 on the CPU where
+# venus is absent (4.4 kernel). The caps pin High@4.0: left open, gst picks
+# Baseline@1.0, wrong for 720p.
 # Output is turned upright for the phone held in portrait: both sensors are
 # mounted at 270 degrees (libcamera "Rotation", from the DT), so frames are
 # rotated 90 degrees counter-clockwise. PIXEL2_CAMERA_ROTATE=0 keeps the
@@ -75,10 +78,17 @@ photo)
     echo "$out" ;;
 video)
     c=$(cam_of "${2:-rear}"); secs=${3:-10}; out=${4:-video-$ts.mp4}
+    if gst-inspect-1.0 v4l2h264enc >/dev/null 2>&1; then
+        fmt=NV12
+        enc='v4l2h264enc extra-controls=controls,video_bitrate=6000000 ! video/x-h264,profile=high,level=(string)4 ! h264parse'
+    else
+        fmt=I420
+        enc='x264enc speed-preset=ultrafast tune=zerolatency bitrate=6000'
+    fi
+    # shellcheck disable=SC2086 # $enc is a pipeline fragment
     gst-launch-1.0 -q -e libcamerasrc camera-name="$c" \
-        ! video/x-raw,width=1280,height=720 ! videoconvert ! video/x-raw,format=I420 ! queue \
-        ! x264enc speed-preset=ultrafast tune=zerolatency bitrate=6000 \
-        ! mp4mux ! filesink location="$out" >/dev/null 2>&1 &
+        ! video/x-raw,width=1280,height=720 ! videoconvert ! video/x-raw,format=$fmt ! queue \
+        ! $enc ! mp4mux ! filesink location="$out" >/dev/null 2>&1 &
     pid=$!
     sleep "$secs"; kill -INT $pid; wait $pid || true
     [ "$rot" = 1 ] && mp4_rotate_ccw "$out"
