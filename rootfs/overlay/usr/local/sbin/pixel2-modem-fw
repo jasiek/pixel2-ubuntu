@@ -11,6 +11,7 @@
 #       (vendor partition)
 #   /lib/firmware/qcom/  a530_pm4.fw, a530_pfp.fw, a540_gpmu.fw2 (vendor
 #       partition; GPU microcode -- linux-firmware has no a540_gpmu.fw2)
+#   /lib/firmware/qcom/venus-4.4/  venus.mbn (squashed; video codec)
 #   /lib/firmware/  tas2557s_PG21_uCDSP.bin, tas2557s_uCDSP.bin (speaker
 #       amp DSP programs; the driver picks one by silicon revision, P8.6)
 # The ath10k board data (board-2.bin, firmware-5.bin) is baked into the
@@ -36,8 +37,8 @@ V=/vendor/firmware
 [ -f $V/wlanmdsp.mbn ] || { echo "no $V (vendor.service)"; exit 1; }
 
 # Same source files as last time: nothing to do.
-src=$(cat $M/modem.mdt $M/mba.mbn $V/wlanmdsp.mbn $V/ipa_fws.mdt $V/a540_zap.mdt $V/a530_pm4.fw $V/a530_pfp.fw $V/a540_gpmu.fw2 $V/adsp.mdt $V/tas2557s_PG21_uCDSP.bin $V/tas2557s_uCDSP.bin | sha256sum | cut -c1-16)
-if [ "$(cat $STAMP 2>/dev/null)" = "$src" ] && [ -f $W/modem.mbn ] && [ -f $W/a540_zap.mbn ] && [ -f /lib/firmware/qcom/a540_gpmu.fw2 ] && [ -f $W/adsp.mbn ]; then
+src=$(cat $M/modem.mdt $M/mba.mbn $V/wlanmdsp.mbn $V/ipa_fws.mdt $V/a540_zap.mdt $V/a530_pm4.fw $V/a530_pfp.fw $V/a540_gpmu.fw2 $V/adsp.mdt $V/tas2557s_PG21_uCDSP.bin $V/tas2557s_uCDSP.bin $V/venus.mdt | sha256sum | cut -c1-16)
+if [ "$(cat $STAMP 2>/dev/null)" = "$src" ] && [ -f $W/modem.mbn ] && [ -f $W/a540_zap.mbn ] && [ -f /lib/firmware/qcom/a540_gpmu.fw2 ] && [ -f $W/adsp.mbn ] && [ -f /lib/firmware/qcom/venus-4.4/venus.mbn ]; then
     echo "firmware up to date ($src)"
     exit 0
 fi
@@ -50,6 +51,8 @@ pil-squasher $W/a540_zap.mbn $V/a540_zap.mdt
 install -m 644 $V/a530_pm4.fw $V/a530_pfp.fw $V/a540_gpmu.fw2 /lib/firmware/qcom/
 pil-squasher $W/adsp.mbn $V/adsp.mdt
 install -m 644 $V/tas2557s_PG21_uCDSP.bin $V/tas2557s_uCDSP.bin /lib/firmware/
-chmod 644 $W/*.mbn
+install -d /lib/firmware/qcom/venus-4.4
+pil-squasher /lib/firmware/qcom/venus-4.4/venus.mbn $V/venus.mdt
+chmod 644 $W/*.mbn /lib/firmware/qcom/venus-4.4/venus.mbn
 echo "$src" > $STAMP
 echo "firmware built from modem$suffix + vendor ($src)"
