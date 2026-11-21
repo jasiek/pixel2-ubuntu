@@ -56,10 +56,9 @@ the owner.
 ## How this was measured
 
 - **Source:** the token counts each response records in the Claude Code
-  transcripts, counting each response once:
-  - session 1: `~/.claude/projects/-Users-jps-github-ubuntu-touch-pixel2/`
-    (the repo lived in `~/github` at first);
-  - session 2: `~/.claude/projects/-Volumes-Pixel2Dev-ubuntu-touch-pixel2/`.
+  transcripts (`~/.claude/projects/<repo path>/`), counting each response
+  once. Session 1's transcript is filed under the repo's first location in
+  the home directory, session 2's under the current one.
 - **Prices:** Anthropic API list prices.
   - Opus 5.5: $4 / $20 per million input / output tokens, cache reads $0.20.
   - Haiku 5.5: $0.10 / $0.50, cache reads $0.01.
