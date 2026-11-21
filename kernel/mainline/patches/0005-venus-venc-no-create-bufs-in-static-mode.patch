@@ -1,0 +1,74 @@
+From: pixel2 ubuntu port
+Subject: [PATCH] media: venus: venc: refuse CREATE_BUFS on a streaming static-mode capture queue
+
+On HFI 3xx (msm8998) the encoder's bitstream (capture) buffers are in
+static mode: the driver registers every capture buffer with
+SET_BUFFERS when streaming starts, and the firmware only accepts FTBs
+for those addresses. vb2 still lets userspace add buffers with
+VIDIOC_CREATE_BUFS while the queue streams, and venus queues them like
+any other. The firmware then dies on the first FTB of the new buffer:
+
+  qcom-venus: SFR message from FW: QC_IMAGE_VERSION_STRING=VIDEO.VE.4.4-00051
+  Err_Fatal - Z:\b\venus_proc\venus\utils\src\vbuffer.c:1219:
+
+and on msm8998 a firmware that has died cannot be restarted (system
+error recovery fails 5x, then the SoC resets on the watchdog).
+
+GStreamer's v4l2h264enc/v4l2h265enc do exactly this: when fewer capture
+buffers are queued than the pool's copy threshold, the pool
+"resurrects" one, i.e. CREATE_BUFS mid-stream (seen as "queued buffer 4"
+of 4 allocated; pixel2 test 63). A sink that reads the data (filesink)
+hits it every time, fakesink never does; v4l2-ctl never allocates after
+STREAMON and works.
+
+Refuse CREATE_BUFS on the capture queue while it streams in static
+mode. GStreamer then falls back to copying the buffer, which it already
+does when it cannot allocate.
+
+---
+--- a/drivers/media/platform/qcom/venus/helpers.h
++++ b/drivers/media/platform/qcom/venus/helpers.h
+@@ -45,6 +45,7 @@
+ 				u32 buftype);
+ int venus_helper_set_color_format(struct venus_inst *inst, u32 fmt);
+ int venus_helper_set_dyn_bufmode(struct venus_inst *inst);
++bool venus_helper_is_dynamic_bufmode(struct venus_inst *inst);
+ int venus_helper_set_bufsize(struct venus_inst *inst, u32 bufsize, u32 buftype);
+ int venus_helper_set_multistream(struct venus_inst *inst, bool out_en,
+ 				 bool out2_en);
+--- a/drivers/media/platform/qcom/venus/helpers.c
++++ b/drivers/media/platform/qcom/venus/helpers.c
+@@ -552,7 +552,13 @@
+ 		return false;
+ 
+ 	return caps->cap_bufs_mode_dynamic;
++}
++
++bool venus_helper_is_dynamic_bufmode(struct venus_inst *inst)
++{
++	return is_dynamic_bufmode(inst);
+ }
++EXPORT_SYMBOL_GPL(venus_helper_is_dynamic_bufmode);
+ 
+ int venus_helper_unregister_bufs(struct venus_inst *inst)
+ {
+--- a/drivers/media/platform/qcom/venus/venc.c
++++ b/drivers/media/platform/qcom/venus/venc.c
+@@ -1104,6 +1104,17 @@
+ 		    sizes[0] < inst->output_buf_size)
+ 			return -EINVAL;
+ 
++		/*
++		 * In static buffer mode the firmware only knows the bitstream
++		 * buffers registered at stream start; an FTB for a buffer
++		 * created later is a fatal firmware error (msm8998:
++		 * "Err_Fatal - vbuffer.c:1219"). Refuse CREATE_BUFS then.
++		 */
++		if (q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE &&
++		    vb2_is_streaming(q) &&
++		    !venus_helper_is_dynamic_bufmode(inst))
++			return -EBUSY;
++
+ 		return 0;
+ 	}
+ 
