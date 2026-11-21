@@ -754,3 +754,14 @@
  * powers the OIS only while streaming (test 43: rails + OIS on cost +15-20 mA
  * USB input current, ~80 mW, A/B in one boot).
  */
+
+/*
+ * Hardware video codec (venus: H.264/HEVC/VP8 encode, H.264/HEVC/VP9
+ * decode). Porthole's venus series (0181-0233) makes it work on taimen;
+ * same SoC and firmware here. The firmware is squashed on the phone from
+ * /vendor/firmware/venus.mdt by pixel2-modem-fw into
+ * qcom/venus-4.4/venus.mbn, the name msm8998_res asks for.
+ */
+&venus {
+	status = "okay";
+};
