@@ -1,0 +1,31 @@
+From: pixel2 ubuntu port
+Subject: [PATCH] media: venus: venc: make every I-frame an IDR
+
+venc sets HFI_PROPERTY_CONFIG_VENC_IDR_PERIOD to 0, "only the first
+I-frame is IDR". The periodic keyframes (every gop_size frames) are then
+non-IDR I-frames. The encoder flags them V4L2_BUF_FLAG_KEYFRAME and a
+muxer writes them as sync samples, but a decoder cannot start there: an
+H.264 MP4 from v4l2h264enc decodes front to back (300/300 frames on
+macOS), while seeking to any point after the first GOP fails with
+"Cannot Decode" (pixel2 tests 64-65; HEVC was not affected).
+
+Use 1, every I-frame an IDR, so each keyframe is a random-access point.
+
+---
+--- a/drivers/media/platform/qcom/venus/venc.c
++++ b/drivers/media/platform/qcom/venus/venc.c
+@@ -766,7 +766,13 @@
+ 		 * n > 1 - every n-th I-frame will be IDR frame
+ 		 */
+ 		ptype = HFI_PROPERTY_CONFIG_VENC_IDR_PERIOD;
+-		idrp.idr_period = 0;
++		/*
++		 * Every I-frame an IDR: with 0 the periodic keyframes are
++		 * non-IDR I-frames that a muxer still marks as sync samples,
++		 * and players cannot start decoding there (seeking in an
++		 * MP4 fails until the next IDR, i.e. never).
++		 */
++		idrp.idr_period = 1;
+ 		ret = hfi_session_set_property(inst, ptype, &idrp);
+ 		if (ret)
+ 			return ret;
