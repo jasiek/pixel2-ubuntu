@@ -214,7 +214,7 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [x] `pixel2-camera video` uses the hardware H.264 encoder (was x264enc on the CPU). _Test 70._
   - [x] build-all, flash boot_b (owner OK 2026-11-21). _Test 71._
   - [x] Gate: lit-scene video looks right. _Test 72: terminal text on a monitor readable, not mirrored (Vision OCR)._
-  - Open: a crashed venus firmware resets the phone (Porthole 0198: no restart in a boot).
+  - [x] A crashed venus firmware no longer resets the phone: patch 0008 skips the recovery on msm8998; the codec is off until reboot (`EIO` on open) and `pixel2-camera` falls back to x264. _Tests 77-80._
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.

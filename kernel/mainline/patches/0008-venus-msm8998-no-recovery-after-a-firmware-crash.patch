@@ -1,0 +1,36 @@
+From: pixel2 ubuntu port
+Subject: [PATCH] venus: msm8998: no recovery after a firmware crash
+
+On msm8998 the venus firmware comes up once per boot: Porthole's 0198
+found that no path back from a firmware shutdown works. The system
+error handler still tried, five times (shutdown, PAS boot, HFI init),
+and a crash during an encode was followed by a SoC reset some seconds
+after it gave up (pixel2 tests 56 and 78).
+
+Skip the recovery on 3xx. sys_error stays set and the IRQ stays off,
+so every HFI entry point fails cleanly and the codec is unavailable
+until the next boot.
+
+---
+--- a/drivers/media/platform/qcom/venus/core.c
++++ b/drivers/media/platform/qcom/venus/core.c
+@@ -141,6 +141,19 @@
+ 	const char *err_msg = "";
+ 	bool failed = false;
+ 
++	/*
++	 * msm8998: the firmware comes up only once per boot (no restart after
++	 * a shutdown, see venus_probe), and the recovery attempt is followed
++	 * by a SoC reset. Leave the dead core alone instead: sys_error stays
++	 * set and the IRQ off, so every HFI entry point fails cleanly and the
++	 * codec is gone until the next boot, but the system stays up.
++	 */
++	if (IS_V3(core)) {
++		dev_err(core->dev,
++			"firmware crashed, video codec unavailable until reboot\n");
++		return;
++	}
++
+ 	ret = pm_runtime_get_sync(core->dev);
+ 	if (ret < 0) {
+ 		err_msg = "resume runtime PM";
