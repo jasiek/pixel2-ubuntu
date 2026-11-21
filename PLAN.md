@@ -212,7 +212,8 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [x] DT: `&venus { status = "okay"; }`; tethered boot (`boot-venus.img`): venus probes, /dev/video* encoder + decoder nodes, no wedge. _Test 56._
   - [x] Encode: GStreamer `v4l2h264enc` and `v4l2h265enc` (videotestsrc -> MP4), files play on the Mac. _Tests 57-69: patches 0005 (no CREATE_BUFS mid-stream: firmware crash), 0006 (every I-frame an IDR: seeking), 0007 (rate control ignores timestamps: bitrate). 720p at 57 fps, bitrate within 5 %._
   - [x] `pixel2-camera video` uses the hardware H.264 encoder (was x264enc on the CPU). _Test 70._
-  - [ ] Gate: build-all, flash boot_b (owner OK), lit-scene video looks right.
+  - [x] build-all, flash boot_b (owner OK 2026-11-21). _Test 71._
+  - [ ] Gate: lit-scene video looks right.
   - Open: a crashed venus firmware resets the phone (Porthole 0198: no restart in a boot).
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
