@@ -207,6 +207,11 @@ Background and sources: `docs/research.md`. Phone details: `docs/device-info.md`
   - [x] Userspace: Mesa 25.2 (noble-updates) freedreno: eglinfo GBM renderer "FD540"; kmscube 120 frames in 1.92 s (60 Hz vsync). `kmscube -A` stalls on this command-mode panel (not the GPU).
   - [x] Power: runtime-suspended when idle (active 1.2 s of 119 s after kmscube).
   - [x] Gate: an OpenGL ES test renders on the GPU (renderer string "FD540"), not llvmpipe.
+- [ ] **P8.8** Hardware H.264 + HEVC encode (venus) (owner request 2026-11-21). Estimate 1-2 h: Porthole's venus series (0178-0233) already makes it work on taimen and is in our kernel; walleye only lacks the DT node and the firmware.
+  - [x] Firmware: pixel2-modem-fw squashes /vendor/firmware/venus.mdt into qcom/venus-4.4/venus.mbn (staged on the phone).
+  - [ ] DT: `&venus { status = "okay"; }`; tethered boot (`boot-venus.img`): venus probes, /dev/video* encoder + decoder nodes, no wedge.
+  - [ ] Encode: GStreamer `v4l2h264enc` and `v4l2h265enc` (videotestsrc -> MP4), files play on the Mac.
+  - [ ] Gate: `pixel2-camera video` uses the hardware H.264 encoder (was x264enc on the CPU); flash boot_b.
 
 ## Phase 9: One-command build + guided flashing (2–4 h; owner request 2026-11-17)
 Goal: on a fresh clone, one script builds everything and then walks the user through flashing a stock Pixel 2, step by step, with checks.
