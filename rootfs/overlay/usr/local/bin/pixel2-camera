@@ -86,10 +86,11 @@ video)
         enc='x264enc speed-preset=ultrafast tune=zerolatency bitrate=6000'
     fi
     # shellcheck disable=SC2086 # $enc is a pipeline fragment
-    # 15 fps is what the soft ISP delivers; left open, the caps say 30 and
-    # the encoder's rate control spends the bitrate on frames that never come.
+    # The framerate caps the auto-exposure's frame length (libcamera patch
+    # 0001); it also gives the encoder's rate control the real frame rate.
+    # Dim scenes come out noisier (more gain) instead of dropping to 15 fps.
     gst-launch-1.0 -q -e libcamerasrc camera-name="$c" \
-        ! video/x-raw,width=1280,height=720,framerate=15/1 ! videoconvert ! video/x-raw,format=$fmt ! queue \
+        ! video/x-raw,width=1280,height=720,framerate=30/1 ! videoconvert ! video/x-raw,format=$fmt ! queue \
         ! $enc ! mp4mux ! filesink location="$out" >/dev/null 2>&1 &
     pid=$!
     sleep "$secs"; kill -INT $pid; wait $pid || true
