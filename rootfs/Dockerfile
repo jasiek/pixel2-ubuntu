@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         rmtfs tqftpserv qrtr-tools \
         libyaml-0-2 libevent-2.1-7t64 libevent-pthreads-2.1-7t64 libyuv0 libtiff6 libdw1t64 libunwind8 \
         gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly \
+        gstreamer1.0-plugins-bad \
         v4l-utils \
         libegl-mesa0 libgles2 libgbm1 mesa-libgallium kmscube mesa-utils-bin \
         alsa-utils \
